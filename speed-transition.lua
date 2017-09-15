@@ -15,6 +15,10 @@ function set_timeout()
    return time_out
 end
 
+function restore_normalspeed()
+   mp.set_property("speed", normalspeed)
+end
+
 function check_should_speedup()
    subdelay = mp.get_property_native("sub-delay")
    mp.command("no-osd set sub-visibility no")
@@ -40,7 +44,7 @@ function add_timers(nextsub)
       if nextsub - 1 > 0 then
          mp.add_timeout((nextsub-1)/speedup, reset_early)
       else
-         mp.set_property("speed", normalspeed)
+         restore_normalspeed()
       end
       --We don't know when the next sub comes, so search for it recursively
    elseif nextsub == 0 then
@@ -61,7 +65,7 @@ function reset_early()
       nextsub , shouldspeedup = check_should_speedup()
       if not shouldspeedup then
          --print("reset_early executed")
-         mp.set_property("speed", normalspeed)
+         restore_normalspeed()
       else
          --print("reset_early aborted! Seeking/Pausing?")
       end
@@ -81,7 +85,7 @@ function speed_transition(subtext, sub)
       end
    elseif state == 1 then
       if sub ~= "" then
-         mp.set_property("speed", normalspeed)
+         restore_normalspeed()
          state = 0
       end
    end
@@ -89,17 +93,15 @@ end
 
 function toggle()
    if not enable then
-      enable = true
-      state = 0
       mp.observe_property("sub-text", "native", speed_transition)
       mp.osd_message("speed-transition enabled")
    else
-      enable = false
-      state = 0
-      mp.set_property("speed", normalspeed)
+      restore_normalspeed()
       mp.unobserve_property(speed_transition)
       mp.osd_message("speed-transition disabled")
    end
+   state = 0
+   enable = not enable
 end
 
 function pause(e,v)
@@ -109,4 +111,4 @@ function pause(e,v)
 end
 
 mp.observe_property("pause", "native", pause)
-mp.add_key_binding("Ctrl+j", "toggle_speedtrans", toggle)
+mp.add_key_binding("ctrl+j", "toggle_speedtrans", toggle)
