@@ -110,6 +110,24 @@ function pause(e,v)
    end
 end
 
+
+local sub_color
+local sub_color2
+toggle2 = false
+
+function toggle_sub_visibility()
+   if not toggle2 then
+      sub_color = mp.get_property("sub-color", "1/1/1")
+      sub_color2 = mp.get_property("sub-border-color", "0/0/0")
+      mp.set_property("sub-color", "0/0/0/0")
+      mp.set_property("sub-border-color", "0/0/0/0")
+   else
+      mp.set_property("sub-color", sub_color)
+      mp.set_property("sub-border-color", sub_color2)
+   end
+   toggle2 = not toggle2
+end
+
 function change_speedup(v)
    speedup = speedup + v
    mp.osd_message("speedup: "..speedup)
@@ -117,5 +135,6 @@ end
 
 mp.observe_property("pause", "native", pause)
 mp.add_key_binding("ctrl+j", "toggle_speedtrans", toggle)
+mp.add_key_binding("alt+j", "toggle_sub_visibility", toggle_sub_visibility)
 mp.add_key_binding("alt++", "increase_speedup", function() change_speedup(0.1) end)
 mp.add_key_binding("alt+-", "decrease_speedup", function() change_speedup(-0.1) end)
