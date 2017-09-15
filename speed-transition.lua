@@ -110,5 +110,12 @@ function pause(e,v)
    end
 end
 
+function change_speedup(v)
+   speedup = speedup + v
+   mp.osd_message("speedup: "..speedup)
+end
+
 mp.observe_property("pause", "native", pause)
 mp.add_key_binding("ctrl+j", "toggle_speedtrans", toggle)
+mp.add_key_binding("alt++", "increase_speedup", function() change_speedup(0.1) end)
+mp.add_key_binding("alt+-", "decrease_speedup", function() change_speedup(-0.1) end)
