@@ -1,6 +1,7 @@
 lookahead=5  --if nextsub >= lookahead then speedup
 normalspeed=mp.get_property_native("speed")
 speedup=2.5
+leadin=1
 -------------------
 
 state=0
@@ -42,7 +43,13 @@ function add_timers(nextsub)
       --make sure we reset the speed on the unlikely case when a timer fires
       --within one second of the next sub
       if nextsub - 1 > 0 then
-         mp.add_timeout((nextsub-1)/speedup, reset_early)
+	     local temp_leadin = leadin
+		 if nextsub-1-temp_leadin<0 then
+		   --mp.osd_message("low0")
+		   temp_leadin = 0
+		   nextsub = 1
+		 end
+         mp.add_timeout((nextsub-1-temp_leadin)/speedup, reset_early)
       else
          restore_normalspeed()
       end
@@ -63,7 +70,7 @@ function reset_early()
    --seeking/pausing results in firing timers early/late
    if mp.get_property_native("sub-text") == "" and state == 1 then
       nextsub , shouldspeedup = check_should_speedup()
-      if not shouldspeedup then
+      if not shouldspeedup or nextsub<leadin then
          --print("reset_early executed")
          restore_normalspeed()
       else
