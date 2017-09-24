@@ -1,7 +1,7 @@
 lookahead=5  --if nextsub >= lookahead then speedup
 normalspeed=mp.get_property_native("speed")
 speedup=2.5
-leadin=2
+leadin=1
 -------------------
 
 state=0
