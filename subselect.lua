@@ -37,7 +37,8 @@ function fixsub(path)
    f:close()
 end
 
-function set_down_dir(ddir)
+function set_down_dir(options)
+   ddir = options.down_dir
    if ddir == "" then
       if mp.get_property_native("path", ""):find("://") ~= nil then
          if ops == "win" then
@@ -58,37 +59,40 @@ function set_down_dir(ddir)
          end
       end
    end
-   return ddir
+   options.down_dir = ddir
 end
 
 function get_python_binary()
    python = nil
+   python_error = ""
    python_version = utils.subprocess({ args = { "python", "--version" }})
    if python_version.status < 0 then
-      mp.osd_message("python not found")
+      python_error = "python not found"
    else
       if python_version.stdout:find("3%.") ~= nil then
          python = "python"
       else
          python_version = utils.subprocess({ args = { "python3", "--version" }})
          if python_version.status < 0 then
-            mp.osd_message("python3 not installed")
+            python_error = "python3 not installed"
          else
             python = "python3"
          end
       end
    end
-   return python
+   return python, python_error
 end
 
+python, python_error = get_python_binary()
+read_options(options)
+set_down_dir(options)
+
 function search_subs()
-   read_options(options)
-   ddir = set_down_dir(options.down_dir)
    video = mp.get_property_native("media-title", "")
-   python = get_python_binary()
    if python ~= nil then
-      ret = utils.subprocess({ args = { python, options.subselect_path, video, ddir, options.sub_language }})
+      ret = utils.subprocess({ args = { python, options.subselect_path, video, options.down_dir, options.sub_language }})
    else
+      mp.osd_message(python_error)
       return
    end
    if string.find(ret.stdout, ".") ~= nil then
@@ -96,8 +100,6 @@ function search_subs()
       subtitle_path = utils.join_path(ddir, ret.stdout)
       fixsub(subtitle_path)
       mp.commandv("sub-add", subtitle_path)
-   else
-      mp.osd_message("No subtitles found")
    end
 end
 
