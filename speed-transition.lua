@@ -50,7 +50,7 @@ function add_timers(nextsub)
       --We don't know when the next sub comes, so search for it recursively
    elseif nextsub == 0 then
       --search for next sub after time_out seconds, when its position might be known
-      if not mp.get_property_native("pause") and set_timeout() - 1 > 0 then
+      if not mp.get_property_native("pause") and set_timeout() - leadin > 0 then
          mp.add_timeout((time_out-leadin)/speedup, search_next_sub)
       end
    end
