@@ -33,6 +33,7 @@ Right now it only lists subtitles from OpenSubtitles, but has the ability to sea
 Copy subselect.lua and subselect.py into your script folder
 
 ### Configuration
+Changing the configuration is optional. Options:
 * *down_dir*: set the download path for the subtitles
 * *subselect_path*: set the subselect.py path
 * *sub_language*: set language for subtitles [default english]; value is a 3-letter ISO-639-3 language code
@@ -40,7 +41,7 @@ Copy subselect.lua and subselect.py into your script folder
 Per default the script tries to download the subtitles into the folder from where the video is being played. Is that not possible it downloads them into your HOME folder, or in Windows into your Downloads folder. You may have to set the subselect.py path manually if the script guesses the wrong mpv configuration directory. If the script is somehow not working as expected, it is recommended to set both *down_dir* and *subselect_path* and make sure they are absolute paths and do exist.
 
 The option to be changed can be put inside a `subselect.conf` file in the lua-settings folder. Create them if they don't exist.
-Sample `subselect.conf` if you want to change both options:
+Sample `subselect.conf` if you want to change all options:
 ```
 down_dir=C:\Users\<me>\subtitles
 subselect_path=C:\Users\<me>\python_scripts\subselect.py
