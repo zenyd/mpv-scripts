@@ -11,6 +11,7 @@ class subselect :
         frame = self.root
         frame.title("Subtitle Downloader")
         self.video_title_in = Entry(frame, width=100)
+        self.video_title_in.bind("<Return>", self.search_)
         self.video_title_in.insert(0, videotitle)
         self.video_title_in.grid(row=0, column=0)
         self.search_button = Button(frame, text="Search", command=self.search)
@@ -43,6 +44,9 @@ class subselect :
             self.language = video_title[-1].strip()
             video_title = video_title[0]
         return Video.fromname(video_title)
+
+    def search_(self, *args):
+        self.search()
 
     def search(self) :
         try :
