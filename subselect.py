@@ -37,19 +37,16 @@ class subselect :
             
     def get_video_from_title(self) :
         video_title = self.video_title_in.get()
-        if video_title == "" :
-            return
-        
         self.language = sub_language
         if ";" in video_title :
             video_title = video_title.split(";")
             self.language = video_title[-1].strip()
             video_title = video_title[0]
-        self.video = Video.fromname(video_title)
+        return Video.fromname(video_title)
 
     def search(self) :
-        self.get_video_from_title()
         try :
+            self.video = self.get_video_from_title()
             subtitles = list_subtitles([self.video], {Language(self.language)}, providers=["opensubtitles"])
         except ValueError as exc :
             self.show_message("Error", str(exc))
@@ -57,8 +54,8 @@ class subselect :
             self.show_subtitles(subtitles[self.video])
 
     def download_best_subtitle(self) :
-        self.get_video_from_title()
         try :
+            self.video = self.get_video_from_title()
             best_subtitles = download_best_subtitles([self.video], {Language(self.language)})
         except ValueError as exc :
             self.show_message("Error", str(exc))
