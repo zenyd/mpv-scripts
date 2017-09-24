@@ -14,6 +14,7 @@ class subselect :
         self.video_title_in.bind("<Return>", self.search_)
         self.video_title_in.insert(0, videotitle)
         self.video_title_in.grid(row=0, column=0)
+        self.video_title_in.focus()
         self.search_button = Button(frame, text="Search", command=self.search)
         self.search_button.grid(row=0, column=1)
         self.best_button = Button(frame, text="Best", command=self.download_best_subtitle)
