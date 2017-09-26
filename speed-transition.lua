@@ -18,6 +18,9 @@ end
 
 function restore_normalspeed()
    mp.set_property("speed", normalspeed)
+   if mp.get_property_native("video-sync") == "desync" then
+      mp.set_property("video-sync", "audio")
+   end
 end
 
 function check_should_speedup()
@@ -78,6 +81,9 @@ function speed_transition(subtext, sub)
       if sub == "" then
          nextsub, shouldspeedup = check_should_speedup()
          if shouldspeedup then
+            if mp.get_property_native("video-sync") == "audio" then
+               mp.set_property("video-sync", "desync")
+            end
             normalspeed = mp.get_property_native("speed")
             mp.set_property("speed", speedup)
             add_timers(nextsub)
