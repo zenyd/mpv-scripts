@@ -1,9 +1,10 @@
-local leadin = 1
-local lookahead = 5
-local speedup=6
+lookahead = 5
+speedup = 2.5
+leadin = 1
 ---------------
 
-local normalspeed=1
+normalspeed=mp.get_property_native("speed")
+
 function restore_normalspeed()
    mp.set_property("speed", normalspeed)
    if mp.get_property_native("video-sync") == "desync" then
@@ -11,55 +12,55 @@ function restore_normalspeed()
    end
 end
 
-local mark = 0
 function check_should_speedup()
-   subdelay = mp.get_property_native("sub-delay")
+   local subdelay = mp.get_property_native("sub-delay")
    mp.command("no-osd set sub-visibility no")
    mp.command("no-osd sub-step 1")
-   mark = mp.get_property("time-pos")
-   nextsubdelay = mp.get_property_native("sub-delay")
-   nextsub = subdelay - nextsubdelay
+   local mark = mp.get_property("time-pos")
+   local nextsubdelay = mp.get_property_native("sub-delay")
+   local nextsub = subdelay - nextsubdelay
    mp.set_property("sub-delay", subdelay)
    mp.command("no-osd set sub-visibility yes")
-   return nextsub
+   return nextsub, nextsub >= lookahead or nextsub == 0, mark
 end
 
-local searching = false
-function postioncheck(_,position)
+function check_position(_, position)
    if position then
-      if nextsub~=0 and position>=(mark+nextsub-leadin) then
+      local nextsub, _ , mark = check_should_speedup()
+      if nextsub ~= 0 and position >= (mark+nextsub-leadin) then
          restore_normalspeed()
-         mp.unobserve_property(postioncheck)
-         searching = false
-      else
-         check_should_speedup()
+         mp.unobserve_property(check_position)
       end
    end
 end
 
-function speed_transition(_,text)
-   if text=="" then
-      local next1 = check_should_speedup()
-      if (next1 > leadin and next1 >= lookahead) or next1==0 then
-         if searching == false then
+function speed_transition(_, sub)
+   if state == 0 then
+      if sub == "" then
+         _ , shouldspeedup = check_should_speedup()
+         if shouldspeedup then
             normalspeed = mp.get_property("speed")
             if mp.get_property_native("video-sync") == "audio" then
                mp.set_property("video-sync", "desync")
             end
+            mp.set_property("speed", speedup)
+            mp.observe_property("time-pos", "native", check_position)
+            state = 1
          end
-         searching = true
-         mp.set_property("speed", speedup)
-         mark = mp.get_property("time-pos")
-         mp.observe_property("time-pos", "native", postioncheck)
+      end
+   elseif state == 1 then
+      if sub ~= "" then
+         mp.unobserve_property(check_position)
+         restore_normalspeed()
+         state = 0
       end
    end
 end
 
-local sub_color
-local sub_color2
-local toggle2 = true
+toggle2 = false
+
 function toggle_sub_visibility()
-   if toggle2==true then
+   if not toggle2 then
       sub_color = mp.get_property("sub-color", "1/1/1/1")
       sub_color2 = mp.get_property("sub-border-color", "0/0/0/1")
       mp.set_property("sub-color", "0/0/0/0")
@@ -68,8 +69,8 @@ function toggle_sub_visibility()
       mp.set_property("sub-color", sub_color)
       mp.set_property("sub-border-color", sub_color2)
    end
+   mp.osd_message("subtitle visibility: "..tostring(toggle2))
    toggle2 = not toggle2
-    mp.osd_message("subtitle visibility: "..tostring(toggle2))
 end
 
 function change_speedup(v)
@@ -82,7 +83,9 @@ function change_leadin(v)
    mp.osd_message("leadin: "..leadin)
 end
 
-local enable = false
+enable = false
+state = 0
+
 function toggle()
    if not enable then
       normalspeed = mp.get_property("speed")
@@ -91,8 +94,10 @@ function toggle()
    else
       restore_normalspeed()
       mp.unobserve_property(speed_transition)
+      mp.unobserve_property(check_position)
       mp.osd_message("speed-transition disabled")
    end
+   state = 0
    enable = not enable
 end
 
