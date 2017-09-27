@@ -95,7 +95,6 @@ function toggle()
    enable = not enable
 end
 
-mp.observe_property("pause", "native", pause)
 mp.add_key_binding("ctrl+j", "toggle_speedtrans", toggle)
 mp.add_key_binding("alt+j", "toggle_sub_visibility", toggle_sub_visibility)
 mp.add_key_binding("alt++", "increase_speedup", function() change_speedup(0.1) end)
