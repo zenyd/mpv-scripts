@@ -85,6 +85,7 @@ end
 local enable = false
 function toggle()
    if not enable then
+      normalspeed = mp.get_property("speed")
       mp.observe_property("sub-text", "native", speed_transition)
       mp.osd_message("speed-transition enabled")
    else
