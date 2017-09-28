@@ -1,5 +1,5 @@
 lookahead = 5
-speedup = 2.5
+speedup = 6
 leadin = 1
 ---------------
 
@@ -16,22 +16,19 @@ function check_should_speedup()
    local subdelay = mp.get_property_native("sub-delay")
    mp.command("no-osd set sub-visibility no")
    mp.command("no-osd sub-step 1")
-   local mark = mp.get_property("time-pos")
    local nextsubdelay = mp.get_property_native("sub-delay")
    local nextsub = subdelay - nextsubdelay
    mp.set_property("sub-delay", subdelay)
    mp.command("no-osd set sub-visibility yes")
-   return nextsub, nextsub >= lookahead or nextsub == 0, mark
+   return nextsub, nextsub >= lookahead or nextsub == 0
 end
 
-function check_position(_, position)
-   if position then
-      local nextsub, _ , mark = check_should_speedup()
-      if nextsub ~= 0 and position >= (mark+nextsub-leadin) then
-         restore_normalspeed()
-         mp.unobserve_property(check_position)
-      end
-   end
+function check_position()
+  local nextsub = check_should_speedup()
+  if nextsub ~= 0 and nextsub<=leadin then
+	 restore_normalspeed()
+	 mp.unobserve_property(check_position)
+  end
 end
 
 function speed_transition(_, sub)
@@ -44,7 +41,7 @@ function speed_transition(_, sub)
                mp.set_property("video-sync", "desync")
             end
             mp.set_property("speed", speedup)
-            mp.observe_property("time-pos", "native", check_position)
+            mp.observe_property("time-pos", nil, check_position)
             state = 1
          end
       end
