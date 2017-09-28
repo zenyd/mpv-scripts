@@ -5,6 +5,15 @@ leadin = 1
 
 normalspeed=mp.get_property_native("speed")
 
+function set_timeout()
+   if mp.get_property_native("cache-size") ~= nil then
+      time_out = mp.get_property_native("cache-secs")
+   else
+      time_out = mp.get_property_native("demuxer-readahead-secs")
+   end
+   return time_out
+end
+
 function restore_normalspeed()
    mp.set_property("speed", normalspeed)
    if mp.get_property_native("video-sync") == "desync" then
@@ -16,37 +25,41 @@ function check_should_speedup()
    local subdelay = mp.get_property_native("sub-delay")
    mp.command("no-osd set sub-visibility no")
    mp.command("no-osd sub-step 1")
+   local mark = mp.get_property("time-pos")
    local nextsubdelay = mp.get_property_native("sub-delay")
    local nextsub = subdelay - nextsubdelay
    mp.set_property("sub-delay", subdelay)
    mp.command("no-osd set sub-visibility yes")
-   return nextsub, nextsub >= lookahead or nextsub == 0
+   return nextsub, nextsub >= lookahead or nextsub == 0, mark
 end
 
-function check_position()
-  local nextsub = check_should_speedup()
-  if nextsub ~= 0 and nextsub<=leadin then
-	 restore_normalspeed()
-	 mp.unobserve_property(check_position)
-  end
+function check_position(_, position)
+   if position then
+      if nextsub ~= 0 and nextsub <= leadin then
+         restore_normalspeed()
+         mp.unobserve_property(check_position)
+      elseif nextsub == 0 and position >= (mark+set_timeout()) then
+         nextsub, _ , mark = check_should_speedup()
+      end
+   end
 end
 
 function speed_transition(_, sub)
    if state == 0 then
       if sub == "" then
-         _ , shouldspeedup = check_should_speedup()
+         nextsub, shouldspeedup, mark = check_should_speedup()
          if shouldspeedup then
             normalspeed = mp.get_property("speed")
             if mp.get_property_native("video-sync") == "audio" then
                mp.set_property("video-sync", "desync")
             end
             mp.set_property("speed", speedup)
-            mp.observe_property("time-pos", nil, check_position)
+            mp.observe_property("time-pos", "native", check_position)
             state = 1
          end
       end
    elseif state == 1 then
-      if sub ~= "" then
+      if sub ~= "" and sub ~= nil then
          mp.unobserve_property(check_position)
          restore_normalspeed()
          state = 0
