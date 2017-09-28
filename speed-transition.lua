@@ -5,6 +5,15 @@ leadin = 1
 
 normalspeed=mp.get_property_native("speed")
 
+function set_timeout()
+   if mp.get_property_native("cache-size") ~= nil then
+      time_out = mp.get_property_native("cache-secs")
+   else
+      time_out = mp.get_property_native("demuxer-readahead-secs")
+   end
+   return time_out
+end
+
 function restore_normalspeed()
    mp.set_property("speed", normalspeed)
    if mp.get_property_native("video-sync") == "desync" then
@@ -26,10 +35,11 @@ end
 
 function check_position(_, position)
    if position then
-      local nextsub, _ , mark = check_should_speedup()
       if nextsub ~= 0 and position >= (mark+nextsub-leadin) then
-         restore_normalspeed()
+         restore_normalspeed("check_position")
          mp.unobserve_property(check_position)
+      elseif nextsub == 0 and position >= (mark+set_timeout()) then
+         nextsub, _ , mark = check_should_speedup()
       end
    end
 end
@@ -37,7 +47,7 @@ end
 function speed_transition(_, sub)
    if state == 0 then
       if sub == "" then
-         _ , shouldspeedup = check_should_speedup()
+         nextsub, shouldspeedup, mark = check_should_speedup()
          if shouldspeedup then
             normalspeed = mp.get_property("speed")
             if mp.get_property_native("video-sync") == "audio" then
@@ -49,9 +59,9 @@ function speed_transition(_, sub)
          end
       end
    elseif state == 1 then
-      if sub ~= "" then
+      if sub ~= "" and sub ~= nil then
          mp.unobserve_property(check_position)
-         restore_normalspeed()
+         restore_normalspeed("speed_transition")
          state = 0
       end
    end
