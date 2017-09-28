@@ -35,7 +35,7 @@ end
 
 function check_position(_, position)
    if position then
-      if nextsub ~= 0 and nextsub <= leadin then
+      if nextsub ~= 0 and position >= (mark+nextsub-leadin) then
          restore_normalspeed()
          mp.unobserve_property(check_position)
       elseif nextsub == 0 and position >= (mark+set_timeout()) then
