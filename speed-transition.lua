@@ -1,5 +1,5 @@
 lookahead = 5
-speedup = 6
+speedup = 2.5
 leadin = 1
 ---------------
 
