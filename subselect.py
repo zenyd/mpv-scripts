@@ -88,7 +88,7 @@ class subselect :
             title = video.name + ".srt"
         s = save_subtitles(video, [subtitle], True, save_dir)
         if s != [] :
-            print(title, end="")
+            sys.stdout.buffer.write(title.encode("utf-8"))
             self.root.destroy()
         else :
             self.show_message("Download failed", "Subtitle download failed!")
