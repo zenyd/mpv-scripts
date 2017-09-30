@@ -59,7 +59,7 @@ function speed_transition(_, sub)
          end
       end
    elseif state == 1 then
-      if sub ~= "" and sub ~= nil then
+      if sub ~= "" and sub ~= nil or not mp.get_property_native("sid") then
          mp.unobserve_property(check_position)
          restore_normalspeed()
          state = 0
