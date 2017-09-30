@@ -6,6 +6,7 @@ leadin = 1
 normalspeed=mp.get_property_native("speed")
 
 function set_timeout()
+   local time_out
    if mp.get_property_native("cache-size") ~= nil then
       time_out = mp.get_property_native("cache-secs")
    else
@@ -25,7 +26,7 @@ function check_should_speedup()
    local subdelay = mp.get_property_native("sub-delay")
    mp.command("no-osd set sub-visibility no")
    mp.command("no-osd sub-step 1")
-   local mark = mp.get_property("time-pos")
+   local mark = mp.get_property_native("time-pos")
    local nextsubdelay = mp.get_property_native("sub-delay")
    local nextsub = subdelay - nextsubdelay
    mp.set_property("sub-delay", subdelay)
@@ -47,7 +48,8 @@ end
 function speed_transition(_, sub)
    if state == 0 then
       if sub == "" then
-         nextsub, shouldspeedup, mark = check_should_speedup()
+         nextsub, shouldspeedup, first_mark = check_should_speedup()
+         mark = first_mark
          if shouldspeedup then
             normalspeed = mp.get_property("speed")
             if mp.get_property_native("video-sync") == "audio" then
@@ -63,6 +65,8 @@ function speed_transition(_, sub)
          mp.unobserve_property(check_position)
          restore_normalspeed()
          state = 0
+      elseif mp.get_property_native("time-pos") < first_mark then
+         nextsub, _ , mark = check_should_speedup()
       end
    end
 end
