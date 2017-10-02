@@ -48,7 +48,9 @@ end
 function speed_transition(_, sub)
    if state == 0 then
       if sub == "" then
-         nextsub, shouldspeedup, mark = check_should_speedup()
+         nextsub, shouldspeedup, speedup_zone_begin = check_should_speedup()
+         mark = speedup_zone_begin
+         speedup_zone_end = mark+nextsub
          if shouldspeedup then
             normalspeed = mp.get_property("speed")
             if mp.get_property_native("video-sync") == "audio" then
@@ -60,10 +62,15 @@ function speed_transition(_, sub)
          end
       end
    elseif state == 1 then
-      if sub ~= "" then
+      if sub ~= "" and sub ~= nil or not mp.get_property_native("sid") then
          mp.unobserve_property(check_position)
          restore_normalspeed()
          state = 0
+      else
+         local pos = mp.get_property_native("time-pos", 0)
+         if pos < speedup_zone_begin or pos > speedup_zone_end then
+            nextsub, _ , mark = check_should_speedup()
+         end
       end
    end
 end
@@ -112,9 +119,18 @@ function toggle()
    enable = not enable
 end
 
+function reset_on_file_load()
+   if state == 1 then
+      mp.unobserve_property(check_position)
+      restore_normalspeed()
+      state = 0
+   end
+end
+
 mp.add_key_binding("ctrl+j", "toggle_speedtrans", toggle)
 mp.add_key_binding("alt+j", "toggle_sub_visibility", toggle_sub_visibility)
 mp.add_key_binding("alt++", "increase_speedup", function() change_speedup(0.1) end)
 mp.add_key_binding("alt+-", "decrease_speedup", function() change_speedup(-0.1) end)
 mp.add_key_binding("alt+0", "increase_leadin", function() change_leadin(0.25) end)
 mp.add_key_binding("alt+9", "decrease_leadin", function() change_leadin(-0.25) end)
+mp.register_event("file-loaded", reset_on_file_load)
