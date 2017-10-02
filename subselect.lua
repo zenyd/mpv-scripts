@@ -85,9 +85,9 @@ end
 
 python, python_error = get_python_binary()
 read_options(options)
-set_down_dir(options)
 
 function search_subs()
+   set_down_dir(options)
    video = mp.get_property_native("media-title", "")
    if python ~= nil then
       ret = utils.subprocess({ args = { python, options.subselect_path, video, options.down_dir, options.sub_language }})
