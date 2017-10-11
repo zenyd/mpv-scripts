@@ -53,7 +53,7 @@ function speed_transition(_, sub)
          mark = speedup_zone_begin
          speedup_zone_end = mark+nextsub
          if shouldspeedup then
-            if skipmode == true and nextsub>=leadin then
+            if skipmode == true and nextsub-leadin>=leadin and mp.get_property("pause") == "no" then
                mp.command("no-osd seek "..tostring(nextsub-leadin).." relative exact")
             else
                normalspeed = mp.get_property("speed")
