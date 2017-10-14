@@ -1,6 +1,7 @@
 lookahead = 5
 speedup = 2.5
 leadin = 1
+skipmode=false
 ---------------
 
 normalspeed=mp.get_property_native("speed")
@@ -52,13 +53,21 @@ function speed_transition(_, sub)
          mark = speedup_zone_begin
          speedup_zone_end = mark+nextsub
          if shouldspeedup then
-            normalspeed = mp.get_property("speed")
-            if mp.get_property_native("video-sync") == "audio" then
-               mp.set_property("video-sync", "desync")
+            if skipmode and (nextsub-leadin>=leadin or nextsub==0) and mp.get_property("pause") == "no" then
+               if nextsub>set_timeout() or nextsub==0 then
+                  mp.command("no-osd seek "..tostring(mp.get_property("demuxer-cache-duration")-leadin).." relative exact")
+               else
+                  mp.command("no-osd seek "..tostring(nextsub-leadin).." relative exact")
+               end
+            else
+               normalspeed = mp.get_property("speed")
+               if mp.get_property_native("video-sync") == "audio" then
+                  mp.set_property("video-sync", "desync")
+               end
+               mp.set_property("speed", speedup)
+               mp.observe_property("time-pos", "native", check_position)
+               state = 1
             end
-            mp.set_property("speed", speedup)
-            mp.observe_property("time-pos", "native", check_position)
-            state = 1
          end
       end
    elseif state == 1 then
@@ -89,6 +98,19 @@ function toggle_sub_visibility()
    end
    mp.osd_message("subtitle visibility: "..tostring(toggle2))
    toggle2 = not toggle2
+end
+
+function toggle_mode()
+   skipmode = not skipmode
+   if enable then
+      toggle()
+      toggle()
+   end
+   if skipmode then
+      mp.osd_message("skip mode")
+   else
+      mp.osd_message("speed mode")
+   end
 end
 
 function change_speedup(v)
@@ -129,6 +151,7 @@ end
 
 mp.add_key_binding("ctrl+j", "toggle_speedtrans", toggle)
 mp.add_key_binding("alt+j", "toggle_sub_visibility", toggle_sub_visibility)
+mp.add_key_binding("ctrl+alt+j", "toggle_mode", toggle_mode)
 mp.add_key_binding("alt++", "increase_speedup", function() change_speedup(0.1) end)
 mp.add_key_binding("alt+-", "decrease_speedup", function() change_speedup(-0.1) end)
 mp.add_key_binding("alt+0", "increase_leadin", function() change_leadin(0.25) end)
