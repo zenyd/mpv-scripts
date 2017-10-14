@@ -13,9 +13,12 @@ The script works best in `video-sync=audio` mode (the default in mpv), because i
 
 Sensible defaults have been set, but if you want to change the `lookahead` value take care to not set it larger than what the buffers can provide. This applies to embedded subtitles and not external.
 
+There is an alternate "skip" mode that instead seeks directly to the next sub.
+
 Key Bind|Effect
 --------|------
 `ctrl + j`|Toggle script on/off
+`ctrl + alt + j`|Toggle script mode (speed/skip)
 `alt + j`|Toggle sub visibility on/off (non-styled subs)
 `alt + '+'`|Increase speedup
 `alt + '-'`|Decrease speedup
