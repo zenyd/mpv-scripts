@@ -1,6 +1,6 @@
 lookahead = 5
 speedup = 2.5
-leadin = 1
+leadin = 1 --range 0-2
 ---------------
 
 normalspeed=mp.get_property_native("speed")
@@ -91,13 +91,22 @@ function toggle_sub_visibility()
    toggle2 = not toggle2
 end
 
+function clamp(v,l,u)
+   if l and v < l then
+      v = l
+   elseif u and v > u then
+      v = u
+   end
+   return v
+end
+
 function change_speedup(v)
    speedup = speedup + v
    mp.osd_message("speedup: "..speedup)
 end
 
 function change_leadin(v)
-   leadin = leadin + v
+   leadin = clamp(leadin + v, 0, 2)
    mp.osd_message("leadin: "..leadin)
 end
 
