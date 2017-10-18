@@ -16,6 +16,7 @@ Sensible defaults have been set, but if you want to change the `lookahead` value
 Key Bind|Effect
 --------|------
 `ctrl + j`|Toggle script on/off
+`ctrl + alt+ j`|Toggle skip mode
 `alt + j`|Toggle sub visibility on/off (non-styled subs)
 `alt + '+'`|Increase speedup
 `alt + '-'`|Decrease speedup
