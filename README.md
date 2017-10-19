@@ -21,6 +21,7 @@ Key Bind|Effect
 `alt + '+'`|Increase speedup
 `alt + '-'`|Decrease speedup
 
+
 ## subselect
 A lua script for downloading subtitles using a GUI and automatically loading them in mpv. It lets you input the name of the video but mainly tries to guess it based on the video title. Uses subliminal for subtitle download and Python tkinter for GUI. Works both on Windows and Linux (possibly macOS too?).
 
@@ -53,3 +54,9 @@ sub_language=deu
 
 ### Usage
 First invoke the script using `alt + u`, input a movie name, or use the one provided by the script, search and download subtitles. If you want to change the language for the subtitles append `;[3-letter ISO-639-3 code]`. So if you want to search for e.g. german subtitles append `;deu`.
+
+
+## delete-file
+As the name suggests this is a small script for deleting files played through mpv. You can mark a file to be deleted and can unmark it if desired. Once quitting mpv, the script starts the deletion process. This is platform-agnostic so should work everywhere.
+
+`ctrl + DEL`: mark/unmark file to be deleted
