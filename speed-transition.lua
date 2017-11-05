@@ -1,7 +1,8 @@
 lookahead = 5
 speedup = 2.5
 leadin = 1 --range 0-2
-skipmode=false
+skipmode = false
+directskip = false
 ---------------
 
 normalspeed=mp.get_property_native("speed")
@@ -46,6 +47,22 @@ function check_position(_, position)
    end
 end
 
+function skipval()
+   local skipval = mp.get_property_native("demuxer-cache-duration", 5)
+   skipval = clamp(skipval, 1, 5)
+   if nextsub > 0 then
+      if nextsub-skipval-leadin <= 0 or directskip then
+         skipval = nextsub - leadin
+      end
+   else
+      skipval = clamp(skipval-leadin, 0, nil)
+      if skipval == 0 then
+         skipval = clamp(skipval-1, 1, nil)
+      end
+   end
+   return skipval
+end
+
 function speed_transition(_, sub)
    if state == 0 then
       if sub == "" then
@@ -59,11 +76,7 @@ function speed_transition(_, sub)
                temp_disable_skipmode = true
             end
             if skipmode and not temp_disable_skipmode and mp.get_property("pause") == "no" then
-               if nextsub>set_timeout()-leadin or nextsub==0 then
-                  mp.command("no-osd seek "..tostring(mp.get_property("demuxer-cache-duration")-leadin).." relative exact")
-               else
-                  mp.command("no-osd seek "..tostring(nextsub-leadin).." relative exact")
-               end
+               mp.commandv("no-osd", "seek", skipval(), "relative", "exact")
             else
                normalspeed = mp.get_property("speed")
                if mp.get_property_native("video-sync") == "audio" then

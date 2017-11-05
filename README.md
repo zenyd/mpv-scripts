@@ -13,6 +13,9 @@ The script works best in `video-sync=audio` mode (the default in mpv), because i
 
 Sensible defaults have been set, but if you want to change the `lookahead` value take care to not set it larger than what the buffers can provide. This applies to embedded subtitles and not external.
 
+**skipmode:**
+There is an alternative speedup mode called 'skipmode'. In this mode the video doesn't speed up, but it gets skipped till the next subtitle. It can be configured to skip directly to the next subtitle or in steps. To enable skipmode set `skipmode = true` and to enable direct skip set `directskip = true`.
+
 Key Bind|Effect
 --------|------
 `ctrl + j`|Toggle script on/off
