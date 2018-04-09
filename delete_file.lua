@@ -29,14 +29,12 @@ function mark_delete()
    end
 end
 
-function delete(e)
-   if e.reason == "quit" then
-      for i, v in pairs(del_list) do
-         print("deleting: "..v)
-         os.remove(v)
-      end
+function delete()
+   for i, v in pairs(del_list) do
+      print("deleting: "..v)
+      os.remove(v)
    end
 end
 
 mp.add_key_binding("ctrl+DEL", "delete_file", mark_delete)
-mp.register_event("end-file", delete)
+mp.register_event("shutdown", delete)
