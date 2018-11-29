@@ -17,11 +17,13 @@ function set_timeout()
    return time_out
 end
 
+local aid
 function restore_normalspeed()
    mp.set_property("speed", normalspeed)
    if mp.get_property_native("video-sync") == "desync" then
       mp.set_property("video-sync", "audio")
    end
+   if aid~=mp.get_property("aid") then mp.set_property("aid", aid) end
 end
 
 function check_should_speedup()
@@ -36,11 +38,23 @@ function check_should_speedup()
    return nextsub, nextsub >= lookahead or nextsub == 0, mark
 end
 
+function check_audio(_,ds)
+   if state==0 then
+      return
+   end
+   if ds and tonumber(ds)>leadin then
+      aid = mp.get_property("aid")
+      mp.set_property("aid", "no")
+      print("avsync greater than leadin, dropping audio")
+   end
+end
+
 function check_position(_, position)
    if position then
       if nextsub ~= 0 and position >= (mark+nextsub-leadin) then
          restore_normalspeed()
          mp.unobserve_property(check_position)
+         mp.unobserve_property(check_audio)
       elseif nextsub == 0 and position >= (mark+set_timeout()-leadin) then
          nextsub, _ , mark = check_should_speedup()
       end
@@ -85,12 +99,15 @@ function speed_transition(_, sub)
                mp.set_property("speed", speedup)
                mp.observe_property("time-pos", "native", check_position)
                state = 1
+               aid=mp.get_property("aid")
+               mp.observe_property("avsync", "native", check_audio)
             end
          end
       end
    elseif state == 1 then
       if sub ~= "" and sub ~= nil or not mp.get_property_native("sid") then
          mp.unobserve_property(check_position)
+         mp.unobserve_property(check_audio)
          restore_normalspeed()
          state = 0
       else
