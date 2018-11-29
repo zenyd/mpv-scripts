@@ -108,11 +108,14 @@ function toggle_sub_visibility()
    if not toggle2 then
       sub_color = mp.get_property("sub-color", "1/1/1/1")
       sub_color2 = mp.get_property("sub-border-color", "0/0/0/1")
+      sub_color3 = mp.get_property("sub-shadow-color", "0/0/0/1")
       mp.set_property("sub-color", "0/0/0/0")
       mp.set_property("sub-border-color", "0/0/0/0")
+      mp.set_property("sub-shadow-color", "0/0/0/0")
    else
       mp.set_property("sub-color", sub_color)
       mp.set_property("sub-border-color", sub_color2)
+      mp.set_property("sub-shadow-color", sub_color3)
    end
    mp.osd_message("subtitle visibility: "..tostring(toggle2))
    toggle2 = not toggle2
