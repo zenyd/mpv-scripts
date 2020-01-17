@@ -23,7 +23,7 @@ function restore_normalspeed()
    if mp.get_property_native("video-sync") == "desync" then
       mp.set_property("video-sync", "audio")
    end
-   if aid~=mp.get_property("aid") then mp.set_property("aid", aid) end
+   if (aid~=nil and aid~=mp.get_property("aid")) then mp.set_property("aid", aid) end
 end
 
 function check_should_speedup()
