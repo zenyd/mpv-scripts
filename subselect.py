@@ -25,9 +25,22 @@ class subselect :
         self.result_listbox.delete(0, END)
         self.subtitles_in_list = []
         for s in subtitles :
-            if hasattr(s, "filename") :
-                self.result_listbox.insert(END, s.filename)
-                self.subtitles_in_list += [s]
+            listname = ""
+            if s.provider_name == "opensubtitles" :
+                listname = "[opensubtitles]: {}".format(s.filename)
+            elif (s.provider_name == "podnapisi"
+                    or s.provider_name == "addic7ed"
+                    or s.provider_name == "subscenter") :
+                listname = "[{}]: {}".format(s.provider_name, s.title)
+            elif s.provider_name == "legendastv" :
+                listname = "[legendastv]: {}".format(s.name)
+            elif s.provider_name == "tvsubtitles" :
+                listname = "[tvsubtitles]: {}".format(s.release)
+            else :
+                listname = "[{}]: {}".format(s.provider_name, s.id)
+
+            self.result_listbox.insert(END, listname)
+            self.subtitles_in_list += [s]
         self.result_listbox.grid(row=1, column=0, columnspan=3, sticky=E+W)
 
         if not hasattr(self, "download_button") :
@@ -52,7 +65,7 @@ class subselect :
     def search(self) :
         try :
             self.video = self.get_video_from_title()
-            subtitles = list_subtitles([self.video], {Language(self.language)}, providers=["opensubtitles"])
+            subtitles = list_subtitles([self.video], {Language(self.language)}, providers=None)
         except ValueError as exc :
             self.show_message("Error", str(exc))
         else :
@@ -81,7 +94,7 @@ class subselect :
             self.save_subtitle(self.video, True, selected_subtitle)
     
     def save_subtitle(self, video, change_filename, subtitle) :
-        if change_filename :
+        if change_filename and subtitle.provider_name == "opensubtitles" :
             video.name = subtitle.filename
             title = os.path.splitext(subtitle.filename)[0]+".srt"
         else :

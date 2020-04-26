@@ -65,15 +65,24 @@ end
 function get_python_binary()
    python = nil
    python_error = ""
-   python_version = utils.subprocess({ args = { "python", "--version" }})
-   if python_version.status < 0 then
+   python_version = mp.command_native({
+      name = "subprocess",
+      args = { "python", "--version"},
+      capture_stdout = true
+   })
+
+   if python_version.error_string ~= "" then
       python_error = "python not found"
    else
       if python_version.stdout:find("3%.") ~= nil then
          python = "python"
       else
-         python_version = utils.subprocess({ args = { "python3", "--version" }})
-         if python_version.status < 0 then
+         python_version = mp.command_native({
+            name = "subprocess",
+            args = { "python3", "--version" }
+         })
+         
+         if python_version.error_string ~= "" then
             python_error = "python3 not installed"
          else
             python = "python3"
@@ -83,14 +92,18 @@ function get_python_binary()
    return python, python_error
 end
 
-python, python_error = get_python_binary()
 read_options(options)
 
 function search_subs()
    set_down_dir(options)
-   video = mp.get_property_native("media-title", "")
+   video = mp.get_property_native("filename/no-ext", "")
+   python, python_error = get_python_binary()
    if python ~= nil then
-      ret = utils.subprocess({ args = { python, options.subselect_path, video, options.down_dir, options.sub_language }})
+      ret = mp.command_native({
+         name = "subprocess",
+         args = { python, options.subselect_path, video, options.down_dir, options.sub_language },
+         capture_stdout = true
+      })
    else
       mp.osd_message(python_error)
       return
