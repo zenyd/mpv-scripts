@@ -1,11 +1,30 @@
-lookahead = 5
-speedup = 2.5
-leadin = 1 --range 0-2
-skipmode = false
-directskip = false
----------------
+lookahead = 5         --if the next subtitle appears after this threshold then speedup
+speedup = 5            --the value that "speed" is set to during speedup
+leadin = 1            --seconds to stop short of the next subtitle --range 0-2
+skipmode = false      --instead of speeding up playback seek to the next known subtitle
+maxskip = 5            --max seek distance (seconds) when skipmode is enabled
+skipdelay = 0.25          --in skip mode, this setting delays each skip by x seconds (must be >=0)
+directskip = false      --seek to next known subtitle no matter how far away
+dropOnAVdesync = true
+--Because mpv syncs subtitles to audio it is possible that if audio processing lags behind--
+--video processing then normal playback may not resume in sync with the video. If "avsync" > leadin--
+--then this disables the audio so that we can ensure normal playback resumes on time.
 
+ignoreSpecial = false  --if true, a subtitle that contains any ignoredCharacters will be transitioned as if it were empty
+ignoredCharacters = {"♪","♫","#","♯"}
+---------------User options above this line--
+
+firstskip = true	--make the first skip in skip mode not have to wait for skipdelay
 normalspeed=mp.get_property_native("speed")
+
+function shouldIgnore(subtext)
+  if subtext and subtext~="" and ignoreSpecial then
+    for i = 1,#ignoredCharacters do
+      if string.find(subtext,ignoredCharacters[i]) then return true end
+    end
+  end
+  return false
+end
 
 function set_timeout()
    local time_out
@@ -30,6 +49,9 @@ function check_should_speedup()
    local subdelay = mp.get_property_native("sub-delay")
    mp.command("no-osd set sub-visibility no")
    mp.command("no-osd sub-step 1")
+   while mp.get_property("sub-text") and shouldIgnore(mp.get_property("sub-text")) do
+      mp.command("no-osd sub-step 1")
+   end
    local mark = mp.get_property_native("time-pos")
    local nextsubdelay = mp.get_property_native("sub-delay")
    local nextsub = subdelay - nextsubdelay
@@ -41,8 +63,7 @@ end
 function check_audio(_,ds)
    if state==0 then
       return
-   end
-   if ds and tonumber(ds)>leadin then
+   elseif ds and tonumber(ds)>leadin and mp.get_property("aid")~="no" then
       aid = mp.get_property("aid")
       mp.set_property("aid", "no")
       print("avsync greater than leadin, dropping audio")
@@ -63,34 +84,47 @@ end
 
 function skipval()
    local skipval = mp.get_property_native("demuxer-cache-duration", 5)
-   skipval = clamp(skipval, 1, 5)
    if nextsub > 0 then
-      if nextsub-skipval-leadin <= 0 or directskip then
-         skipval = nextsub - leadin
+      if directskip then
+         skipval =  nextsub - leadin
+      elseif nextsub-skipval-leadin <= 0 then
+         skipval =  clamp(nextsub-leadin, 0, maxskip)
       end
+   elseif directskip then
+      skipval = clamp(skipval-leadin, 1, nil)
    else
-      skipval = clamp(skipval-leadin, 0, nil)
-      if skipval == 0 then
-         skipval = clamp(skipval-1, 1, nil)
-      end
+      skipval = clamp(skipval-leadin, 1, maxskip)
    end
    return skipval
 end
 
 function speed_transition(_, sub)
    if state == 0 then
-      if sub == "" then
+      if sub == "" or (sub and shouldIgnore(sub)) then
          last_speedup_zone_begin = speedup_zone_begin
          nextsub, shouldspeedup, speedup_zone_begin = check_should_speedup()
          mark = speedup_zone_begin
          speedup_zone_end = mark+nextsub
-         if shouldspeedup then
+         if shouldspeedup or (skipmode and not firstskip) then
             local temp_disable_skipmode = false
             if last_speedup_zone_begin and mark < last_speedup_zone_begin then
                temp_disable_skipmode = true
             end
             if skipmode and not temp_disable_skipmode and mp.get_property("pause") == "no" then
-               mp.commandv("no-osd", "seek", skipval(), "relative", "exact")
+               if firstskip or skipdelay == 0 then 
+                  mp.commandv("no-osd", "seek", skipval(), "relative", "exact")
+				  firstskip = false
+               else
+                  mp.add_timeout(skipdelay, function()
+                     if mp.get_property("pause") == "no" then
+                        nextsub, shouldskip = check_should_speedup()
+						firstskip = not shouldskip
+						if nextsub > leadin * 2 then
+                        mp.commandv("no-osd", "seek", skipval(), "relative", "exact")
+						end
+                     end
+                  end)
+               end
             else
                normalspeed = mp.get_property("speed")
                if mp.get_property_native("video-sync") == "audio" then
@@ -99,13 +133,17 @@ function speed_transition(_, sub)
                mp.set_property("speed", speedup)
                mp.observe_property("time-pos", "native", check_position)
                state = 1
-               aid=mp.get_property("aid")
-               mp.observe_property("avsync", "native", check_audio)
+               if dropOnAVdesync then
+                  aid=mp.get_property("aid")
+                  mp.observe_property("avsync", "native", check_audio)
+               end
             end
+         else
+            firstskip = true
          end
       end
    elseif state == 1 then
-      if sub ~= "" and sub ~= nil or not mp.get_property_native("sid") then
+      if sub ~= "" and sub ~= nil and not shouldIgnore(sub) or not mp.get_property_native("sid") then
          mp.unobserve_property(check_position)
          mp.unobserve_property(check_audio)
          restore_normalspeed()
@@ -199,8 +237,8 @@ end
 mp.add_key_binding("ctrl+j", "toggle_speedtrans", toggle)
 mp.add_key_binding("alt+j", "toggle_sub_visibility", toggle_sub_visibility)
 mp.add_key_binding("ctrl+alt+j", "toggle_skipmode", toggle_skipmode)
-mp.add_key_binding("alt++", "increase_speedup", function() change_speedup(0.1) end)
-mp.add_key_binding("alt+-", "decrease_speedup", function() change_speedup(-0.1) end)
+mp.add_key_binding("alt++", "increase_speedup", function() change_speedup(0.1) end, {repeatable=true})
+mp.add_key_binding("alt+-", "decrease_speedup", function() change_speedup(-0.1) end, {repeatable=true})
 mp.add_key_binding("alt+0", "increase_leadin", function() change_leadin(0.25) end)
 mp.add_key_binding("alt+9", "decrease_leadin", function() change_leadin(-0.25) end)
 mp.register_event("file-loaded", reset_on_file_load)
