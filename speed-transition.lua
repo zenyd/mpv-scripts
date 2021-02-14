@@ -1,6 +1,6 @@
 lookahead = 5
 speedup = 2.5
-leadin = 1 --range 0-2
+leadin = 1
 skipmode = false
 directskip = false
 ---------------
@@ -166,7 +166,7 @@ function change_speedup(v)
 end
 
 function change_leadin(v)
-   leadin = clamp(leadin + v, 0, 2)
+   leadin = clamp(leadin + v, 0, nil)
    mp.osd_message("leadin: "..leadin)
 end
 
