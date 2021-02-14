@@ -170,6 +170,11 @@ function change_leadin(v)
    mp.osd_message("leadin: "..leadin)
 end
 
+function change_lookAhead(v)
+	lookahead = clamp(lookahead + v , 0, nil)
+	mp.osd_message("lookahead: "..lookahead)
+end
+
 enable = false
 state = 0
 
@@ -203,4 +208,6 @@ mp.add_key_binding("alt++", "increase_speedup", function() change_speedup(0.1) e
 mp.add_key_binding("alt+-", "decrease_speedup", function() change_speedup(-0.1) end)
 mp.add_key_binding("alt+0", "increase_leadin", function() change_leadin(0.25) end)
 mp.add_key_binding("alt+9", "decrease_leadin", function() change_leadin(-0.25) end)
+mp.add_key_binding("alt+8", "increase_lookahead", function() change_lookAhead(0.25) end)
+mp.add_key_binding("alt+7", "decrease_lookahead", function() change_lookAhead(-0.25) end)
 mp.register_event("file-loaded", reset_on_file_load)
