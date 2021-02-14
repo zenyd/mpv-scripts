@@ -204,7 +204,7 @@ function change_speedup(v)
 end
 
 function change_leadin(v)
-   leadin = clamp(leadin + v, 0, nil)
+   leadin = clamp(leadin + v, 0, 2)
    mp.osd_message("leadin: "..leadin)
 end
 
