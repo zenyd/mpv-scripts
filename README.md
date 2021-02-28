@@ -7,8 +7,6 @@ The script looks for the next subtitle and if it is ahead by 5 (default) seconds
 ### Usage
 For the script to work it is necessary to have an appropriate 'text' subtitle selected and visible.
 
-If you want to use it with local files it is necessary to either have `--cache=yes` or `--demuxer-readahead-secs=10` options enabled in your config/cli. A value of `demuxer-readahead-secs>=10` is recommended. The same applies to `--cache-secs` option if it has been set.
-
 The script works best in `video-sync=audio` mode (the default in mpv), because it will then be able to minimize frame drops on speed transition from high->normal. Stutter-free playback is the result.
 
 Sensible defaults have been set, but if you want to change the `lookahead` value take care to not set it larger than what the buffers can provide. This applies to embedded subtitles and not external.
@@ -23,6 +21,10 @@ Key Bind|Effect
 `alt + j`|Toggle sub visibility on/off (non-styled subs)
 `alt + '+'`|Increase speedup
 `alt + '-'`|Decrease speedup
+`alt + '0'`|Increase leadin (time before the next subtitle to return to normal speed)
+`alt + '9'`|Decrease leadin
+`alt + '8'`|Increase Look ahead (if the next subtitle is closer than this, don't speed up)
+`alt + '7'`|Decrease Look ahead
 
 
 ## subselect
