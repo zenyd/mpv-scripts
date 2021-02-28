@@ -9,7 +9,7 @@ dropOnAVdesync = true
 --Because mpv syncs subtitles to audio it is possible that if audio processing lags behind--
 --video processing then normal playback may not resume in sync with the video. If "avsync" > leadin--
 --then this disables the audio so that we can ensure normal playback resumes on time.
-ignorePattern = true  --if true, subtitles are matched against "subPattern". A successful match will be treated as if there was no subtitle
+ignorePattern = false  --if true, subtitles are matched against "subPattern". A successful match will be treated as if there was no subtitle
 subPattern = "^[#♯♩♪♬♫🎵🎶%[%(]+.*[#♯♩♪♬♫🎵🎶%]%)]+$"
 ---------------User options above this line--
 
@@ -53,7 +53,7 @@ function check_should_speedup()
    local mark = mp.get_property_native("time-pos")
    local nextsubdelay = mp.get_property_native("sub-delay")
    local nextsub = subdelay - nextsubdelay
-   if nextsub > 0 then
+   if ignorePattern and nextsub > 0 then
       local lookNext = true
       local ignore = shouldIgnore(mp.get_property("sub-text"))
       while ignore and lookNext do
@@ -275,7 +275,7 @@ end
 mp.add_key_binding("ctrl+j", "toggle_speedtrans", toggle)
 mp.add_key_binding("alt+j", "toggle_sub_visibility", toggle_sub_visibility)
 mp.add_key_binding("ctrl+alt+j", "toggle_skipmode", toggle_skipmode)
-mp.add_key_binding("alt+=", "increase_speedup", function() change_speedup(0.1) end, {repeatable=true})
+mp.add_key_binding("alt++", "increase_speedup", function() change_speedup(0.1) end, {repeatable=true})
 mp.add_key_binding("alt+-", "decrease_speedup", function() change_speedup(-0.1) end, {repeatable=true})
 mp.add_key_binding("alt+0", "increase_leadin", function() change_leadin(0.25) end)
 mp.add_key_binding("alt+9", "decrease_leadin", function() change_leadin(-0.25) end)
