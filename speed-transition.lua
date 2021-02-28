@@ -3,7 +3,7 @@ speedup = 2            --the value that "speed" is set to during speedup
 leadin = 1            --seconds to stop short of the next subtitle
 skipmode = false      --instead of speeding up playback seek to the next known subtitle
 maxSkip = 5            --max seek distance (seconds) when skipmode is enabled
-minSkip = leadin
+minSkip = leadin       --this is also configurable but setting it too low can actually make your watch time longer
 skipdelay = 1          --in skip mode, this setting delays each skip by x seconds (must be >=0)
 directskip = false      --seek to next known subtitle (must be in cache) no matter how far away
 dropOnAVdesync = true
