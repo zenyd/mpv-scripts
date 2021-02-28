@@ -2,7 +2,8 @@ lookahead = 5         --if the next subtitle appears after this threshold then s
 speedup = 2            --the value that "speed" is set to during speedup
 leadin = 1            --seconds to stop short of the next subtitle
 skipmode = false      --instead of speeding up playback seek to the next known subtitle
-maxskip = 5            --max seek distance (seconds) when skipmode is enabled
+maxSkip = 5            --max seek distance (seconds) when skipmode is enabled
+minSkip = leadin
 skipdelay = 1          --in skip mode, this setting delays each skip by x seconds (must be >=0)
 directskip = false      --seek to next known subtitle (must be in cache) no matter how far away
 dropOnAVdesync = true
@@ -102,14 +103,14 @@ function skipval()
       if directskip then
          skipval =  nextsub - leadin
       elseif nextsub - skipval - leadin <= 0 then
-         skipval =  clamp(nextsub - leadin, 0, maxskip)
+         skipval =  clamp(nextsub - leadin, 0, maxSkip)
       else
-         skipval =  clamp(skipval, 0, maxskip)
+         skipval =  clamp(skipval, 0, maxSkip)
       end
    elseif directskip then
       skipval = clamp(skipval - leadin, 1, nil)
    else
-      skipval = clamp(skipval - leadin, 1, maxskip)
+      skipval = clamp(skipval - leadin, 1, maxSkip)
    end
    return skipval
 end
@@ -144,7 +145,7 @@ function speed_transition(_, sub)
                         if shouldskip or nextsub > leadin then
                            local tSkip = skipval()
                            currentSub = mp.get_property("sub-text")
-                           if tSkip > 1 / mp.get_property("estimated-vf-fps") and (currentSub == "" or shouldIgnore(currentSub)) then
+                           if tSkip > minSkip and (currentSub == "" or shouldIgnore(currentSub)) then
                               mp.commandv("no-osd", "seek", tSkip, "relative", "exact")
                            else 
                               firstskip = true
