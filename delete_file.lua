@@ -36,5 +36,18 @@ function delete()
    end
 end
 
+function list_marks()
+   local delString = "Delete Marks:\n"
+   for _,v in pairs(del_list) do
+      if v:find("\\") then
+         delString = delString..v:match("\\([^\\]*)$").."\n"
+      else
+         delString = delString..v:match("/([^/]*)$").."\n"
+      end
+   end
+   mp.osd_message(delString)
+end
+
 mp.add_key_binding("ctrl+DEL", "delete_file", mark_delete)
+mp.add_key_binding("alt+DEL", "list_marks", list_marks, {repeatable=true})
 mp.register_event("shutdown", delete)
