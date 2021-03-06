@@ -60,8 +60,8 @@ function list_marks()
       mp.osd_message("",0)
    else
       local delString = showList()
-      showListTimer:resume()
       if delString and delString:find(";") then
+         showListTimer:resume()
          print(delString)
       else
          showListTimer:kill()
