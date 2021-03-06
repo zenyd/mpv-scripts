@@ -52,7 +52,7 @@ function showList()
       showListTimer:kill()
    end
 end
-local showListTimer = mp.add_periodic_timer(1,showList)
+showListTimer = mp.add_periodic_timer(1,showList)
 showListTimer:kill()
 function list_marks()
    if showListTimer:is_enabled() then
@@ -71,4 +71,5 @@ end
 
 mp.add_key_binding("ctrl+DEL", "delete_file", mark_delete)
 mp.add_key_binding("alt+DEL", "list_marks", list_marks)
+mp.add_key_binding("ctrl+shift+DEL", "clear_list", function() mp.osd_message("Undelete all"); del_list = {}; end)
 mp.register_event("shutdown", delete)
