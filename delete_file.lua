@@ -39,11 +39,8 @@ end
 function showList()
    local delString = "Delete Marks:\n"
    for _,v in pairs(del_list) do
-      if v:find("\\") then
-         delString = delString..v:match("\\([^\\]*)$").."; "
-      else
-         delString = delString..v:match("/([^/]*)$").."; "
-      end
+      local dFile = v:gsub("/","\\")
+      delString = delString..dFile:match("\\*([^\\]*)$").."; "
    end
    if delString:find(";") then
       mp.osd_message(delString)
