@@ -65,3 +65,5 @@ First invoke the script using `alt + u`, input a movie name, or use the one prov
 As the name suggests this is a small script for deleting files played through mpv. You can mark a file to be deleted and can unmark it if desired. Once quitting mpv, the script starts the deletion process. This is platform-agnostic so should work everywhere.
 
 `ctrl + DEL`: mark/unmark file to be deleted
+`alt + DEL`: show the list of files marked for deletion
+`ctrl + shift + DEL`: clear the list of marks
