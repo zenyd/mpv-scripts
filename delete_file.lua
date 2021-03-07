@@ -36,5 +36,37 @@ function delete()
    end
 end
 
+function showList()
+   local delString = "Delete Marks:\n"
+   for _,v in pairs(del_list) do
+      local dFile = v:gsub("/","\\")
+      delString = delString..dFile:match("\\*([^\\]*)$").."; "
+   end
+   if delString:find(";") then
+      mp.osd_message(delString)
+      return delString
+   elseif showListTimer then
+      showListTimer:kill()
+   end
+end
+showListTimer = mp.add_periodic_timer(1,showList)
+showListTimer:kill()
+function list_marks()
+   if showListTimer:is_enabled() then
+      showListTimer:kill()
+      mp.osd_message("",0)
+   else
+      local delString = showList()
+      if delString and delString:find(";") then
+         showListTimer:resume()
+         print(delString)
+      else
+         showListTimer:kill()
+      end
+   end
+end
+
 mp.add_key_binding("ctrl+DEL", "delete_file", mark_delete)
+mp.add_key_binding("alt+DEL", "list_marks", list_marks)
+mp.add_key_binding("ctrl+shift+DEL", "clear_list", function() mp.osd_message("Undelete all"); del_list = {}; end)
 mp.register_event("shutdown", delete)
