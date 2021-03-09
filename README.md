@@ -64,6 +64,12 @@ First invoke the script using `alt + u`, input a movie name, or use the one prov
 ## delete-file
 As the name suggests this is a small script for deleting files played through mpv. You can mark a file to be deleted and can unmark it if desired. Once quitting mpv, the script starts the deletion process. This is platform-agnostic so should work everywhere.
 
-`ctrl + DEL`: mark/unmark file to be deleted
-`alt + DEL`: show the list of files marked for deletion
-`ctrl + shift + DEL`: clear the list of marks
+Key Bind|Effect
+--------|------
+`ctrl + DEL`|mark/unmark file to be deleted
+`alt + DEL`|show the list of files marked for deletion
+`ctrl + shift + DEL`|clear the list of marked files
+
+
+## copy-paste-URL
+Like its name suggests - copy and paste links into mpv with `ctrl + v` to start playback of a video. This needs an open mpv window like `mpv --idle --force-window` or a window already playing a video. Also the script utilizes powershell, so that needs to be installed as well.
