@@ -73,3 +73,9 @@ Key Bind|Effect
 
 ## copy-paste-URL
 Like its name suggests - copy and paste links into mpv with `ctrl + v` to start playback of a video. This needs an open mpv window like `mpv --idle --force-window` or a window already playing a video. Also the script utilizes powershell, so that needs to be installed as well.
+
+
+## censor
+Skip over parts of videos you don't want (others) to view.
+
+**Usage:** Put the exact filename (w/o extension) of the video you wan't this script to affect inside the names folder. The file has to have an extension itself. Example filename "video.mkv" -> "names/video.txt". Timestamps follow the format "X+:XX:XX(.X+) X+:XX:XX(.X+)". First timestamp denotes beginning and second end of skip window. Sample is included in names directory.

@@ -1,0 +1,4 @@
+#Files containing timestamps have to have an extension like .txt
+#Timestamps follow format X+:XX:XX(.X+)
+0:00:02.09 0:05:00
+1:46:00 1:47:32.125
