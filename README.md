@@ -78,4 +78,16 @@ Like its name suggests - copy and paste links into mpv with `ctrl + v` to start 
 ## censor
 Skip over parts of videos you don't want (others) to view.
 
-**Usage:** Put the exact filename (w/o extension) of the video you wan't this script to affect inside the names folder. The file has to have an extension itself. Example filename "video.mkv" -> "names/video.txt". Timestamps follow the format "X+:XX:XX(.X+) X+:XX:XX(.X+)". First timestamp denotes beginning and second end of skip window. Sample is included in names directory.
+  ##download and installation
+
+   download only "censor" folder and its contents.
+   put the "censor" folder(along with files in it i.e "names" folder and "main.lua") in the "scripts" folder inside mpv configuration folder.
+  
+**Usage:**
+imagine you want to skip the intro which begins on timestamp 0:2:30 and lasts until timestamp 0:4:00
+your anime is called Attack on Titan - 03.mkv.
+So you create a text file named Attack on Titan - 03.txt inside the names folder.
+Now open the just created file and paste 0:02:30 0:04:00 inside it. Save and exit.
+If you open the anime Attack on Titan - 03.mkv it should now skip to the timestamp 0:04:00 after the playtime reaches 0:02:30.
+If you now also wanted to skip the ending you would add one more line to the text file with contents like this 0:21:00 0:22:00
+source of usage - zenyd (https://github.com/zenyd/mpv-scripts/issues/30#issuecomment-872418598)
