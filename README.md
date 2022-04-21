@@ -70,6 +70,10 @@ Key Bind|Effect
 `alt + DEL`|show the list of files marked for deletion
 `ctrl + shift + DEL`|clear the list of marked files
 
+The script can be configured to move files instead of deleting them. The default folder for the moved files is `C:\Users\<me>\delete_file`. To change the defaults create a `delete_file.conf` inside of the `script-opts` folder with contents:
+```
+MoveToFolder=yes
+```
 
 ## copy-paste-URL
 Like its name suggests - copy and paste links into mpv with `ctrl + v` to start playback of a video. This needs an open mpv window like `mpv --idle --force-window` or a window already playing a video. Also the script utilizes powershell, so that needs to be installed as well.

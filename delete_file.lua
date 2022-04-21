@@ -1,6 +1,30 @@
 local utils = require "mp.utils"
 
+require 'mp.options'
+
+options = {}
+options.MoveToFolder = false
+
+if package.config:sub(1,1) == "/" then
+   options.DeletedFilesPath = utils.join_path(os.getenv("HOME"), "delete_file")
+   ops = "unix"
+else
+   options.DeletedFilesPath = utils.join_path(os.getenv("USERPROFILE"), "delete_file")
+   ops = "win"
+end
+
+read_options(options)
+
+
 del_list = {}
+
+function createDirectory()
+   if not utils.file_info(options.DeletedFilesPath) then
+      if not os.execute(string.format('mkdir "%s"', options.DeletedFilesPath)) then
+         print("failed to create folder")
+      end
+   end
+end
 
 function contains_item(l, i)
    for k, v in pairs(l) do
@@ -30,9 +54,37 @@ function mark_delete()
 end
 
 function delete()
+   if options.MoveToFolder then
+      --create folder if not exists
+      createDirectory()
+   end
+
    for i, v in pairs(del_list) do
-      print("deleting: "..v)
-      os.remove(v)
+      if options.MoveToFolder then
+         print("moving: "..v)
+         local _, file_name = utils.split_path(v)
+         --this loop will add a number to the file name if it already exists in the directory
+         --But limit the number of iterations
+         for i = 1,100 do
+            if i > 1 then
+               if file_name:find("[.].+$") then
+                  file_name = file_name:gsub("([.].+)$", string.format("_%d%%1", i))
+               else
+                  file_name = string.format("%s_%d", file_name, i)
+               end
+            end
+            
+            local movedPath = utils.join_path(options.DeletedFilesPath, file_name)
+            local fileInfo = utils.file_info(movedPath)
+            if not fileInfo then
+               os.rename(v, movedPath)
+               break
+            end
+         end
+      else
+         print("deleting: "..v)
+         os.remove(v)
+      end
    end
 end
 
