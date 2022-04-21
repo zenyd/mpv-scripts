@@ -39,7 +39,7 @@ Right now it only lists subtitles from OpenSubtitles, but has the ability to sea
 3. Install subliminal:  `python -m pip install subliminal` should do the trick
 
 ### Installation
-Copy subselect.lua and subselect.py into your script folder
+Copy the subselect folder containing main.lua and subselect.py into your script folder
 
 ### Configuration
 Changing the configuration is optional. Options:
