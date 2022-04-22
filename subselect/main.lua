@@ -4,12 +4,11 @@ require 'mp.options'
 options = {}
 options.down_dir = ""
 options.sub_language = "eng"
+options.subselect_path = utils.join_path(mp.get_script_directory(), "subselect.py")
 
 if package.config:sub(1,1) == "/" then
-   options.subselect_path = utils.join_path(os.getenv("HOME"), ".config/mpv/scripts/subselect.py")
    ops = "unix"
 else
-   options.subselect_path = utils.join_path(os.getenv("APPDATA"), "mpv\\scripts\\subselect.py")
    ops = "win"
 end
 

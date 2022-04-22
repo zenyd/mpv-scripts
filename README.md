@@ -39,21 +39,19 @@ Right now it only lists subtitles from OpenSubtitles, but has the ability to sea
 3. Install subliminal:  `python -m pip install subliminal` should do the trick
 
 ### Installation
-Copy the subselect folder containing main.lua and subselect.py into your script folder
+Copy the `subselect` folder containing `main.lua` and `subselect.py` into your script folder. If you have previous installations of subselect where it was not inside the subselect sub folder, remove them.
 
 ### Configuration
 Changing the configuration is optional. Options:
 * *down_dir*: set the download path for the subtitles
-* *subselect_path*: set the subselect.py path
 * *sub_language*: set language for subtitles [default english]; value is a 3-letter ISO-639-3 language code
 
-Per default the script tries to download the subtitles into the folder from where the video is being played. Is that not possible it downloads them into your HOME folder, or in Windows into your Downloads folder. You may have to set the subselect.py path manually if the script guesses the wrong mpv configuration directory. If the script is somehow not working as expected, it is recommended to set both *down_dir* and *subselect_path* and make sure they are absolute paths and do exist.
+Per default the script tries to download the subtitles into the folder from where the video is being played. Is that not possible it downloads them into your HOME folder, or in Windows into your Downloads folder. You may have to set the subselect.py path manually if the script guesses the wrong mpv configuration directory. If the script is somehow not working as expected, it is recommended to set *down_dir* and make sure it's an absolute path and does exist.
 
-The option to be changed can be put inside a `subselect.conf` file in the lua-settings folder. Create them if they don't exist.
+The option to be changed can be put inside a `subselect.conf` file in the `script-opts` folder. Create them if they don't exist.
 Sample `subselect.conf` if you want to change all options:
 ```
 down_dir=C:\Users\<me>\subtitles
-subselect_path=C:\Users\<me>\python_scripts\subselect.py
 sub_language=deu
 ```
 
