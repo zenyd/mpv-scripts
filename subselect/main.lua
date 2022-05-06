@@ -5,6 +5,7 @@ options = {}
 options.down_dir = ""
 options.sub_language = "eng"
 options.subselect_path = utils.join_path(mp.get_script_directory(), "subselect.py")
+options.python = "python"
 
 if package.config:sub(1,1) == "/" then
    ops = "unix"
@@ -66,7 +67,7 @@ function get_python_binary()
    python_error = ""
    python_version = mp.command_native({
       name = "subprocess",
-      args = { "python", "--version"},
+      args = { options.python, "--version"},
       capture_stdout = true
    })
 
@@ -74,17 +75,17 @@ function get_python_binary()
       python_error = "python not found"
    else
       if python_version.stdout:find("3%.") ~= nil then
-         python = "python"
+         python = options.python
       else
          python_version = mp.command_native({
             name = "subprocess",
-            args = { "python3", "--version" }
+            args = { options.python.."3", "--version" }
          })
          
          if python_version.error_string ~= "" then
             python_error = "python3 not installed"
          else
-            python = "python3"
+            python = options.python.."3"
          end
       end
    end
