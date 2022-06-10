@@ -3,6 +3,7 @@ from subliminal import *
 from babelfish import Language
 import sys, os
 import tkinter.messagebox
+import json
 
 class subselect :
 
@@ -20,7 +21,6 @@ class subselect :
         self.best_button = Button(frame, text="Best", command=self.download_best_subtitle)
         self.best_button.grid(row=0, column=2, sticky=E+W)
         self.result_listbox = Listbox(self.root)
-        self.providers_auth = {'provider': {'username': 'user', 'password': 'pass'}}
 
     def show_subtitles(self, subtitles) :
         self.result_listbox.delete(0, END)
@@ -66,7 +66,7 @@ class subselect :
     def search(self) :
         try :
             self.video = self.get_video_from_title()
-            subtitles = list_subtitles([self.video], {Language(self.language)}, providers=None, provider_configs=self.providers_auth)
+            subtitles = list_subtitles([self.video], {Language(self.language)}, providers=None, provider_configs=providers_auth)
         except ValueError as exc :
             self.show_message("Error", str(exc))
         else :
@@ -75,7 +75,7 @@ class subselect :
     def download_best_subtitle(self) :
         try :
             self.video = self.get_video_from_title()
-            best_subtitles = download_best_subtitles([self.video], {Language(self.language)}, provider_configs=self.providers_auth)
+            best_subtitles = download_best_subtitles([self.video], {Language(self.language)}, provider_configs=providers_auth)
         except ValueError as exc :
             self.show_message("Error", str(exc))
         else :
@@ -91,7 +91,7 @@ class subselect :
             self.show_message("Download failed", "Please select a subtitle")
         else :
             selected_subtitle = self.subtitles_in_list[i[0]]
-            download_subtitles([selected_subtitle], provider_configs=self.providers_auth)
+            download_subtitles([selected_subtitle], provider_configs=providers_auth)
             self.save_subtitle(self.video, True, selected_subtitle)
     
     def save_subtitle(self, video, change_filename, subtitle) :
@@ -112,10 +112,12 @@ class subselect :
 
 videotitle = save_dir = ""
 sub_language = "eng"
+providers_auth = {}
 
 if len(sys.argv) > 1 :
     videotitle = sys.argv[1]
     save_dir = sys.argv[2]
     sub_language = sys.argv[3]
+    providers_auth = json.loads(sys.argv[4])
     
 subselect().root.mainloop()
