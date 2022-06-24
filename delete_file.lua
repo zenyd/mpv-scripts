@@ -1,4 +1,5 @@
 local utils = require "mp.utils"
+local msg = require 'mp.msg'
 
 require 'mp.options'
 
@@ -30,11 +31,13 @@ function contains_item(l, i)
    for k, v in pairs(l) do
       if v == i then
          mp.osd_message("undeleting current file")
+         msg.info("undeleting current file")
          l[k] = nil
          return true
       end
    end
    mp.osd_message("deleting current file")
+   msg.info("deleting current file")
    return false
 end
 
