@@ -46,7 +46,7 @@ Changing the configuration is optional. Options:
 * *down_dir*: set the download path for the subtitles
 * *sub_language*: set language for subtitles [default english]; value is a 3-letter ISO-639-3 language code
 
-Per default the script tries to download the subtitles into the folder from where the video is being played. Is that not possible it downloads them into your HOME folder, or in Windows into your Downloads folder. You may have to set the subselect.py path manually if the script guesses the wrong mpv configuration directory. If the script is somehow not working as expected, it is recommended to set *down_dir* and make sure it's an absolute path and does exist.
+Per default the script tries to download the subtitles into the folder from where the video is being played. If that's not possible, it downloads them into your HOME folder, or in Windows, into your Downloads folder. You may have to set the subselect.py path manually if the script guesses the wrong mpv configuration directory. If the script is somehow not working as expected, it is recommended to set *down_dir* and make sure it's an absolute path and does exist.
 
 The option to be changed can be put inside a `subselect.conf` file in the `script-opts` folder. Create them if they don't exist.
 Sample `subselect.conf` if you want to change all options:
