@@ -5,6 +5,7 @@ options = {}
 options.down_dir = ""
 options.sub_language = "eng"
 options.subselect_path = utils.join_path(mp.get_script_directory(), "subselect.py")
+options.providers_auth = "{}"
 
 if package.config:sub(1,1) == "/" then
    ops = "unix"
@@ -100,7 +101,7 @@ function search_subs()
    if python ~= nil then
       ret = mp.command_native({
          name = "subprocess",
-         args = { python, options.subselect_path, video, options.down_dir, options.sub_language },
+         args = { python, options.subselect_path, video, options.down_dir, options.sub_language, options.providers_auth },
          capture_stdout = true
       })
    else
