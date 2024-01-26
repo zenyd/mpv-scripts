@@ -122,7 +122,8 @@ function speed_transition(_, sub)
       sub = ""
    end;
    if state == 0 then
-      if sub == "" then
+      local subcodec = mp.get_property("current-tracks/sub/codec")
+      if sub == "" and subcodec and (subcodec=="subrip" or subcodec=="ass" or subcodec=="webvtt") then
          last_speedup_zone_begin = speedup_zone_begin
          nextsub, shouldspeedup, speedup_zone_begin = check_should_speedup()
          mark = speedup_zone_begin
