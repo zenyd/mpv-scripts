@@ -503,7 +503,9 @@ function switch_mode()
 end
 
 function reset_on_file_load()
-	restore_normalspeed()
+	if enable then
+		restore_normalspeed()
+	end
 	reset_state()
 end
 
