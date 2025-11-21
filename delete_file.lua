@@ -1,6 +1,7 @@
 local utils = require "mp.utils"
+local msg = require "mp.msg"
 
-require 'mp.options'
+require "mp.options"
 
 options = {}
 options.MoveToFolder = false
@@ -21,20 +22,23 @@ del_list = {}
 function createDirectory()
    if not utils.file_info(options.DeletedFilesPath) then
       if not os.execute(string.format('mkdir "%s"', options.DeletedFilesPath)) then
-         print("failed to create folder")
+         msg.error("failed to create folder for moving deleted files")
       end
    end
 end
 
 function contains_item(l, i)
+   local _, file_name = utils.split_path(i)
    for k, v in pairs(l) do
       if v == i then
          mp.osd_message("undeleting current file")
+         msg.info("undeleting file: ", file_name)
          l[k] = nil
          return true
       end
    end
    mp.osd_message("deleting current file")
+   msg.info("deleting file: ", file_name)
    return false
 end
 
@@ -48,6 +52,7 @@ function mark_delete()
    else
       final_path = utils.join_path(work_dir, file_path)
    end
+   msg.debug("final_path: ", final_path)
    if not contains_item(del_list, final_path) then
       table.insert(del_list, final_path)
    end
@@ -61,7 +66,7 @@ function delete()
 
    for i, v in pairs(del_list) do
       if options.MoveToFolder then
-         print("moving: "..v)
+         msg.info("moving: ", v)
          local _, file_name = utils.split_path(v)
          --this loop will add a number to the file name if it already exists in the directory
          --But limit the number of iterations
@@ -77,13 +82,21 @@ function delete()
             local movedPath = utils.join_path(options.DeletedFilesPath, file_name)
             local fileInfo = utils.file_info(movedPath)
             if not fileInfo then
-               os.rename(v, movedPath)
+               local ok, err, code = os.rename(v, movedPath)
+               if not ok then
+                  msg.error("could not move file: ", err, code)
+               end
                break
+            else
+               msg.warn("File ("..file_name..") already exists")
             end
          end
       else
-         print("deleting: "..v)
-         os.remove(v)
+         msg.info("deleting: ", v)
+         local ok, err, code = os.remove(v)
+         if not ok then
+            msg.error("failed deleting file: ", err, code)
+         end
       end
    end
 end
@@ -111,7 +124,7 @@ function list_marks()
       local delString = showList()
       if delString and delString:find(";") then
          showListTimer:resume()
-         print(delString)
+         msg.info(delString)
       else
          showListTimer:kill()
       end
@@ -120,5 +133,5 @@ end
 
 mp.add_key_binding("ctrl+DEL", "delete_file", mark_delete)
 mp.add_key_binding("alt+DEL", "list_marks", list_marks)
-mp.add_key_binding("ctrl+shift+DEL", "clear_list", function() mp.osd_message("Undelete all"); del_list = {}; end)
+mp.add_key_binding("ctrl+shift+DEL", "clear_list", function() mp.osd_message("un-delete all"); del_list = {}; end)
 mp.register_event("shutdown", delete)
