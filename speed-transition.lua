@@ -30,6 +30,10 @@ state = 0
 firstskip = true --make the first skip in skip mode not have to wait for skipdelay
 aid = nil
 
+--defines how far away we need to be at least from the end of the subtitle to not consider skipping back
+--since we don't always know for how long the subtitle is displayed this is just an arbitrary number
+SKIP_BACK_WINDOW = 1 --only applies for tSkip <= 3
+
 function shouldIgnore(subtext)
 	if cfg.ignorePattern and subtext and subtext ~= '' then
 		local st = subtext:match('^%s*(.-)%s*$') -- trim whitespace
@@ -163,6 +167,34 @@ function wait_finish_seeking()
 	repeat
 		local seeking = mp.get_property_bool('seeking')
 	until not seeking
+end
+
+function skip_back_if_needed(position, subend)
+	msg.debug('  skip_back()')
+	if not last_skip_position then
+		msg.debug('    last_skip_position undefined')
+		reset_state()
+		return
+	end
+
+	msg.debug('    position:', formatTime(position))
+	msg.debug('    subend:', formatTime(subend))
+	local skipback_position = last_skip_position
+	local tskip = position - last_skip_position
+	msg.debug('    tskip:', tskip)
+	msg.debug('    subend - position:', subend - position)
+
+	if tskip <= 3 then
+		if subend - position >= SKIP_BACK_WINDOW then
+			msg.debug('    ->within margin - interrupt skip back')
+			reset_state()
+			return
+		end
+	end
+	msg.debug('    ->skip back to:', formatTime(skipback_position))
+	-- wait_finish_seeking()
+	mp.set_property_number('time-pos', skipback_position)
+	reset_state()
 end
 
 function check_audio(_, ds)
@@ -415,13 +447,8 @@ function speed_transition(_, subend)
 	if state == 3 or (state == 2 and not cfg.exact_skip) then
 		msg.debug('  state >= 2: check seek back / reset')
 		local position = mp.get_property_number('time-pos')
-		if cfg.skipmode and last_skip_position then
-			msg.debug('  position:', formatTime(position))
-			msg.debug('  ->seek back to:', formatTime(last_skip_position))
-			wait_finish_seeking()
-			mp.set_property_number('time-pos', last_skip_position)
-			reset_state()
-			return
+		if cfg.skipmode then
+			skip_back_if_needed(position, subend)
 		end
 		restore_normalspeed()
 		reset_state()
