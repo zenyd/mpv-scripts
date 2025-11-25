@@ -387,11 +387,10 @@ function check_position(_, position)
 			if cfg.skipmode then
 				local seeking = mp.get_property_bool('seeking')
 				if mp.get_property('pause') == 'no' and not seeking then
-					local tlast_skip_position = position
-					position = delayskip(position, cfg.skipdelay)
 					local tSkip, can_skip = skipval(0)
 					if can_skip then
-						last_skip_position = tlast_skip_position
+						position = delayskip(position, cfg.skipdelay)
+						last_skip_position = position
 						skip(tSkip)
 						msg.debug('check_position[3]')
 						msg.debug('  position:', formatTime(position))
