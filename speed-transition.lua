@@ -538,6 +538,7 @@ function reset_on_file_load()
 		restore_normalspeed()
 	end
 	reset_state()
+	last_speedup_zone_begin = 0
 end
 
 function change_speedup(v)
