@@ -389,8 +389,14 @@ function check_position(_, position)
 				end
 			end
 		elseif state == 3 then
-			if position - last_nextsub_check > 0.5 then
-				local t_nextsub, t_shouldspeedup, t_speedup_zone_begin = check_should_speedup(position)
+			if position - last_nextsub_check >= 0.5 then
+				local t_subend = mp.get_property_number('sub-end')
+				local t_nextsub, t_shouldspeedup, t_speedup_zone_begin
+
+				if t_subend then
+					t_nextsub, t_shouldspeedup, t_speedup_zone_begin = check_should_speedup(t_subend)
+				end
+				
 				if t_nextsub then
 					msg.debug('check_position[3]')
 					msg.debug('  position:', formatTime(position))
