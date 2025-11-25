@@ -306,17 +306,17 @@ function check_position(_, position)
 					if position + cfg.skipdelay < speedup_zone_end then
 						position_after_skipdelay = delayskip(position, cfg.skipdelay)
 					end
-					local nextsub = speedup_zone_end - position_after_skipdelay
-					local tSkip, can_skip = skipval(nextsub)
-					if nextsub > 0 and can_skip then
+					local nextsub_start = speedup_zone_end + cfg.leadin - position_after_skipdelay
+					local tSkip, can_skip = skipval(nextsub_start)
+					if nextsub_start > 0 and can_skip then
 						if position_after_skipdelay + tSkip >= speedup_zone_end then
-							if speedup_zone_end - position_after_skipdelay >= cfg.minSkip then
+							if speedup_zone_end + cfg.leadin - position_after_skipdelay >= cfg.minSkip then
 								wait_finish_seeking()
-								mp.set_property_number('time-pos', speedup_zone_end)
+								mp.set_property_number('time-pos', speedup_zone_end + cfg.leadin)
 								msg.debug('check_position[2]')
 								msg.debug('  position:', formatTime(position_after_skipdelay))
-								msg.debug('  nextsub:', nextsub)
-								msg.debug('  direct skip to:', formatTime(speedup_zone_end))
+								msg.debug('  nextsub:', nextsub_start)
+								msg.debug('  direct skip to:', formatTime(speedup_zone_end + cfg.leadin))
 								reset_state()
 							end
 						else
@@ -326,11 +326,11 @@ function check_position(_, position)
 								skip(tSkip)
 								msg.debug('check_position[2]')
 								msg.debug('  position:', formatTime(position_after_skipdelay))
-								msg.debug('  nextsub:', nextsub)
+								msg.debug('  nextsub:', nextsub_start)
 								msg.debug('  skipval:', tSkip)
 							end
 						end
-					elseif nextsub < 0 and not cfg.exact_skip then
+					elseif nextsub_start < 0 and not cfg.exact_skip then
 						local cursubend = mp.get_property_number('sub-end')
 						local margin = 0.5
 						if cursubend and cursubend > speedup_zone_end + cfg.leadin then
@@ -341,7 +341,7 @@ function check_position(_, position)
 							mp.set_property_number('time-pos', speedup_zone_end)
 							msg.debug('check_position[2]')
 							msg.debug('  position:', formatTime(position_after_skipdelay))
-							msg.debug('  nextsub:', nextsub)
+							msg.debug('  nextsub:', nextsub_start)
 							msg.debug('  skipval:', tSkip)
 							msg.debug('  margin:', margin)
 							msg.debug('  ->seek back to: ' .. formatTime(speedup_zone_end))
