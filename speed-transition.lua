@@ -231,6 +231,7 @@ function check_should_speedup(subend)
 	end
 
 	mp.commandv('sub-step', 1)
+	sleep(0)
 
 	local nextsubstart = mp.get_property_number('sub-start')
 	if nextsubstart then
@@ -248,6 +249,7 @@ function check_should_speedup(subend)
 				if t_nextsubstart and t_nextsubstart > nextsubstart then
 					nextsubstart = t_nextsubstart
 					mp.commandv('sub-step', 1)
+					sleep(0)
 				else
 					break
 				end
@@ -256,6 +258,8 @@ function check_should_speedup(subend)
 	end
 
 	mp.set_property_number('sub-delay', subdelay)
+	sleep(0)
+
 	if sub_visibility then
 		mp.set_property_bool('sub-visibility', true)
 	end
