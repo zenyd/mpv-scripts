@@ -326,9 +326,13 @@ function check_position(_, position)
 				msg.debug('  position:', formatTime(position))
 				msg.debug('  speedup_zone_end:', formatTime(speedup_zone_end))
 				if not cfg.exact_skip and last_skip_position and position > speedup_zone_end then
-					msg.debug('  ->seek back to:', formatTime(last_skip_position))
-					wait_finish_seeking()
-					mp.set_property_number('time-pos', last_skip_position)
+					if position > speedup_zone_end + cfg.leadin then
+						msg.debug('  ->seek back to:', formatTime(last_skip_position))
+						-- wait_finish_seeking()
+						mp.set_property_number('time-pos', last_skip_position)
+					else
+						msg.debug('  ->within margin - interrupt skip back')
+					end
 				end
 				reset_state()
 			elseif speedup_zone_begin <= position and position < speedup_zone_end then
