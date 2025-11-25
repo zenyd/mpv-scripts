@@ -220,6 +220,7 @@ function check_should_speedup(subend)
 
 	if cfg.sub_timeout > 0 and substart and substart < subend then
 		if subend - substart >= cfg.sub_timeout then
+			msg.debug('sub timed-out')
 			subend = substart + cfg.sub_timeout
 		end
 	end
@@ -276,8 +277,6 @@ function check_should_speedup(subend)
 	local speedup_begin = subend
 	if shouldspeedup then
 		msg.debug('check_should_speedup()')
-		msg.debug('  shouldspeedup:', tostring(shouldspeedup))
-		msg.debug('  speedup_begin:', formatTime(speedup_begin) or '')
 		msg.debug('  nextsub:', nextsub or '')
 	end
 
@@ -319,12 +318,9 @@ function check_position(_, position)
 			msg.debug('check_position[1] -> [0]')
 			msg.debug('  position:', formatTime(position))
 		elseif state == 2 then
-			-- 			msg.debug('check_position[2]')
-			-- 			msg.debug('  position:', formatTime(position))
 			if speedup_zone_end and position >= speedup_zone_end then
 				msg.debug('check_position[2] -> [0] pos >= end')
 				msg.debug('  position:', formatTime(position))
-				msg.debug('  speedup_zone_end:', formatTime(speedup_zone_end))
 				if not cfg.exact_skip and last_skip_position and position > speedup_zone_end then
 					if position > speedup_zone_end + cfg.leadin then
 						msg.debug('  ->seek back to:', formatTime(last_skip_position))
@@ -412,11 +408,11 @@ function check_position(_, position)
 						speedup_zone_end = t_speedup_zone_begin + nextsub - cfg.leadin
 
 						if cfg.skipmode then
-							msg.debug('check_position[3] -> [2]')
+							msg.debug('  [3] -> [2]')
 							state = 2
 							return
 						else
-							msg.debug('check_position[3] -> [1]')
+							msg.debug('  [3] -> [1]')
 							state = 1
 							last_nextsub_check = position
 							return
