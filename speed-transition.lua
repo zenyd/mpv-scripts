@@ -156,7 +156,7 @@ function skipval(nextsub)
 
 	msg.trace('  skipval:', skipval)
 
-	return skipval
+	return skipval, skipval >= cfg.minSkip
 end
 
 function wait_finish_seeking()
@@ -307,9 +307,8 @@ function check_position(_, position)
 						position_after_skipdelay = delayskip(position, cfg.skipdelay)
 					end
 					local nextsub = speedup_zone_end - position_after_skipdelay
-					local tSkip = 0
-					if nextsub > 0 then
-						tSkip = skipval(nextsub)
+					local tSkip, can_skip = skipval(nextsub)
+					if nextsub > 0 and can_skip then
 						if position_after_skipdelay + tSkip >= speedup_zone_end then
 							if speedup_zone_end - position_after_skipdelay >= cfg.minSkip then
 								wait_finish_seeking()
@@ -320,7 +319,7 @@ function check_position(_, position)
 								msg.debug('  direct skip to:', formatTime(speedup_zone_end))
 								reset_state()
 							end
-						elseif tSkip >= cfg.minSkip then
+						else
 							local seeking = mp.get_property_bool('seeking')
 							if not seeking then
 								last_skip_position = position_after_skipdelay
@@ -390,8 +389,8 @@ function check_position(_, position)
 				if mp.get_property('pause') == 'no' and not seeking then
 					local tlast_skip_position = position
 					position = delayskip(position, cfg.skipdelay)
-					local tSkip = skipval(0)
-					if tSkip >= cfg.minSkip then
+					local tSkip, can_skip = skipval(0)
+					if can_skip then
 						last_skip_position = tlast_skip_position
 						skip(tSkip)
 						msg.debug('check_position[3]')
