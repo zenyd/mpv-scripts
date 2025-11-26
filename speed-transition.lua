@@ -277,7 +277,22 @@ function check_should_speedup(subend)
 		cfg.leadin = 0
 	end
 
-	local shouldspeedup = nextsub and nextsub >= cfg.lookahead - cfg.leadin
+	local calc_shouldspeedup = function()
+		local result = false
+		if nextsub then
+			if cfg.lookahead == 0 then
+				if nextsub > cfg.leadin then
+					result = true
+				end
+			else
+				result = nextsub >= cfg.lookahead - cfg.leadin
+			end
+		end
+		return result
+	end
+
+	local shouldspeedup = calc_shouldspeedup()
+
 	local speedup_begin = subend
 	if shouldspeedup then
 		msg.debug('check_should_speedup()')
