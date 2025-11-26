@@ -281,11 +281,16 @@ function check_should_speedup(subend)
 		local result = false
 		if nextsub then
 			if cfg.lookahead == 0 then
-				if nextsub > cfg.leadin then
-					result = true
+				if not cfg.skipmode then
+					result = nextsub > cfg.leadin
+				else
+					result = nextsub > cfg.minSkip + cfg.leadin
 				end
 			else
 				result = nextsub >= cfg.lookahead - cfg.leadin
+				if cfg.skipmode and result then
+					result = cfg.lookahead - cfg.leadin >= cfg.minSkip
+				end
 			end
 		end
 		return result
