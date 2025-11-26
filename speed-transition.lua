@@ -511,6 +511,9 @@ end
 
 function change_speedup(v)
 	cfg.speedup = cfg.speedup + v
+	if not cfg.skipmode and (state == 1 or state == 3) then
+		mp.set_property('speed', cfg.speedup)
+	end
 	mp.osd_message('speedup: ' .. cfg.speedup)
 	msg.info('speedup:', cfg.speedup)
 end
