@@ -192,7 +192,7 @@ function skip_back_if_needed(position, subend)
 		end
 	end
 	msg.debug('    ->skip back to:', formatTime(skipback_position))
-	-- wait_finish_seeking()
+	wait_finish_seeking()
 	mp.set_property_number('time-pos', skipback_position)
 	reset_state()
 end
@@ -348,7 +348,7 @@ function check_position(_, position)
 				if not cfg.exact_skip and last_skip_position and position > speedup_zone_end then
 					if position > speedup_zone_end + cfg.leadin then
 						msg.debug('  ->seek back to:', formatTime(last_skip_position))
-						-- wait_finish_seeking()
+						wait_finish_seeking()
 						mp.set_property_number('time-pos', last_skip_position)
 					else
 						msg.debug('  ->within margin - interrupt skip back')
