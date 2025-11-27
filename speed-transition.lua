@@ -30,6 +30,10 @@ state = 0
 firstskip = true --make the first skip in skip mode not have to wait for skipdelay
 aid = nil
 
+--defines how far away we need to be at least from the end of the subtitle to not consider skipping back
+--since we don't always know for how long the subtitle is displayed this is just an arbitrary number
+SKIP_BACK_WINDOW = 1 --only applies for tSkip <= 3
+
 function shouldIgnore(subtext)
 	if cfg.ignorePattern and subtext and subtext ~= '' then
 		local st = subtext:match('^%s*(.-)%s*$') -- trim whitespace
@@ -156,13 +160,41 @@ function skipval(nextsub)
 
 	msg.trace('  skipval:', skipval)
 
-	return skipval
+	return skipval, skipval >= cfg.minSkip
 end
 
 function wait_finish_seeking()
 	repeat
 		local seeking = mp.get_property_bool('seeking')
 	until not seeking
+end
+
+function skip_back_if_needed(position, subend)
+	msg.debug('  skip_back()')
+	if not last_skip_position then
+		msg.debug('    last_skip_position undefined')
+		reset_state()
+		return
+	end
+
+	msg.debug('    position:', formatTime(position))
+	msg.debug('    subend:', formatTime(subend))
+	local skipback_position = last_skip_position
+	local tskip = position - last_skip_position
+	msg.debug('    tskip:', tskip)
+	msg.debug('    subend - position:', subend - position)
+
+	if tskip <= 3 then
+		if subend - position >= SKIP_BACK_WINDOW then
+			msg.debug('    ->within margin - interrupt skip back')
+			reset_state()
+			return
+		end
+	end
+	msg.debug('    ->skip back to:', formatTime(skipback_position))
+	wait_finish_seeking()
+	mp.set_property_number('time-pos', skipback_position)
+	reset_state()
 end
 
 function check_audio(_, ds)
@@ -188,6 +220,7 @@ function check_should_speedup(subend)
 
 	if cfg.sub_timeout > 0 and substart and substart < subend then
 		if subend - substart >= cfg.sub_timeout then
+			msg.debug('sub timed-out')
 			subend = substart + cfg.sub_timeout
 		end
 	end
@@ -198,6 +231,7 @@ function check_should_speedup(subend)
 	end
 
 	mp.commandv('sub-step', 1)
+	sleep(0)
 
 	local nextsubstart = mp.get_property_number('sub-start')
 	if nextsubstart then
@@ -215,6 +249,7 @@ function check_should_speedup(subend)
 				if t_nextsubstart and t_nextsubstart > nextsubstart then
 					nextsubstart = t_nextsubstart
 					mp.commandv('sub-step', 1)
+					sleep(0)
 				else
 					break
 				end
@@ -223,6 +258,8 @@ function check_should_speedup(subend)
 	end
 
 	mp.set_property_number('sub-delay', subdelay)
+	sleep(0)
+
 	if sub_visibility then
 		mp.set_property_bool('sub-visibility', true)
 	end
@@ -240,12 +277,30 @@ function check_should_speedup(subend)
 		cfg.leadin = 0
 	end
 
-	local shouldspeedup = nextsub and nextsub >= cfg.lookahead - cfg.leadin
+	local calc_shouldspeedup = function()
+		local result = false
+		if nextsub then
+			if cfg.lookahead == 0 then
+				if not cfg.skipmode then
+					result = nextsub > cfg.leadin
+				else
+					result = nextsub > cfg.minSkip + cfg.leadin
+				end
+			else
+				result = nextsub >= cfg.lookahead - cfg.leadin
+				if cfg.skipmode and result then
+					result = cfg.lookahead - cfg.leadin >= cfg.minSkip
+				end
+			end
+		end
+		return result
+	end
+
+	local shouldspeedup = calc_shouldspeedup()
+
 	local speedup_begin = subend
 	if shouldspeedup then
 		msg.debug('check_should_speedup()')
-		msg.debug('  shouldspeedup:', tostring(shouldspeedup))
-		msg.debug('  speedup_begin:', formatTime(speedup_begin) or '')
 		msg.debug('  nextsub:', nextsub or '')
 	end
 
@@ -287,16 +342,17 @@ function check_position(_, position)
 			msg.debug('check_position[1] -> [0]')
 			msg.debug('  position:', formatTime(position))
 		elseif state == 2 then
-			-- 			msg.debug('check_position[2]')
-			-- 			msg.debug('  position:', formatTime(position))
 			if speedup_zone_end and position >= speedup_zone_end then
 				msg.debug('check_position[2] -> [0] pos >= end')
 				msg.debug('  position:', formatTime(position))
-				msg.debug('  speedup_zone_end:', formatTime(speedup_zone_end))
 				if not cfg.exact_skip and last_skip_position and position > speedup_zone_end then
-					msg.debug('  ->seek back to:', formatTime(last_skip_position))
-					wait_finish_seeking()
-					mp.set_property_number('time-pos', last_skip_position)
+					if position > speedup_zone_end + cfg.leadin then
+						msg.debug('  ->seek back to:', formatTime(last_skip_position))
+						wait_finish_seeking()
+						mp.set_property_number('time-pos', last_skip_position)
+					else
+						msg.debug('  ->within margin - interrupt skip back')
+					end
 				end
 				reset_state()
 			elseif speedup_zone_begin <= position and position < speedup_zone_end then
@@ -306,32 +362,31 @@ function check_position(_, position)
 					if position + cfg.skipdelay < speedup_zone_end then
 						position_after_skipdelay = delayskip(position, cfg.skipdelay)
 					end
-					local nextsub = speedup_zone_end - position_after_skipdelay
-					local tSkip = 0
-					if nextsub > 0 then
-						tSkip = skipval(nextsub)
+					local nextsub_start = speedup_zone_end + cfg.leadin - position_after_skipdelay
+					local tSkip, can_skip = skipval(nextsub_start)
+					if nextsub_start > 0 and can_skip then
 						if position_after_skipdelay + tSkip >= speedup_zone_end then
-							if speedup_zone_end - position_after_skipdelay >= cfg.minSkip then
+							if speedup_zone_end + cfg.leadin - position_after_skipdelay >= cfg.minSkip then
 								wait_finish_seeking()
-								mp.set_property_number('time-pos', speedup_zone_end)
+								mp.set_property_number('time-pos', speedup_zone_end + cfg.leadin)
 								msg.debug('check_position[2]')
 								msg.debug('  position:', formatTime(position_after_skipdelay))
-								msg.debug('  nextsub:', nextsub)
-								msg.debug('  direct skip to:', formatTime(speedup_zone_end))
+								msg.debug('  nextsub:', nextsub_start)
+								msg.debug('  direct skip to:', formatTime(speedup_zone_end + cfg.leadin))
 								reset_state()
 							end
-						elseif tSkip >= cfg.minSkip then
+						else
 							local seeking = mp.get_property_bool('seeking')
 							if not seeking then
 								last_skip_position = position_after_skipdelay
 								skip(tSkip)
 								msg.debug('check_position[2]')
 								msg.debug('  position:', formatTime(position_after_skipdelay))
-								msg.debug('  nextsub:', nextsub)
+								msg.debug('  nextsub:', nextsub_start)
 								msg.debug('  skipval:', tSkip)
 							end
 						end
-					elseif nextsub < 0 and not cfg.exact_skip then
+					elseif nextsub_start < 0 and not cfg.exact_skip then
 						local cursubend = mp.get_property_number('sub-end')
 						local margin = 0.5
 						if cursubend and cursubend > speedup_zone_end + cfg.leadin then
@@ -342,7 +397,7 @@ function check_position(_, position)
 							mp.set_property_number('time-pos', speedup_zone_end)
 							msg.debug('check_position[2]')
 							msg.debug('  position:', formatTime(position_after_skipdelay))
-							msg.debug('  nextsub:', nextsub)
+							msg.debug('  nextsub:', nextsub_start)
 							msg.debug('  skipval:', tSkip)
 							msg.debug('  margin:', margin)
 							msg.debug('  ->seek back to: ' .. formatTime(speedup_zone_end))
@@ -354,8 +409,14 @@ function check_position(_, position)
 				end
 			end
 		elseif state == 3 then
-			if position - last_nextsub_check > 0.5 then
-				local t_nextsub, t_shouldspeedup, t_speedup_zone_begin = check_should_speedup(position)
+			if position - last_nextsub_check >= 0.5 then
+				local t_subend = mp.get_property_number('sub-end')
+				local t_nextsub, t_shouldspeedup, t_speedup_zone_begin
+
+				if t_subend then
+					t_nextsub, t_shouldspeedup, t_speedup_zone_begin = check_should_speedup(t_subend)
+				end
+				
 				if t_nextsub then
 					msg.debug('check_position[3]')
 					msg.debug('  position:', formatTime(position))
@@ -371,11 +432,11 @@ function check_position(_, position)
 						speedup_zone_end = t_speedup_zone_begin + nextsub - cfg.leadin
 
 						if cfg.skipmode then
-							msg.debug('check_position[3] -> [2]')
+							msg.debug('  [3] -> [2]')
 							state = 2
 							return
 						else
-							msg.debug('check_position[3] -> [1]')
+							msg.debug('  [3] -> [1]')
 							state = 1
 							last_nextsub_check = position
 							return
@@ -388,11 +449,10 @@ function check_position(_, position)
 			if cfg.skipmode then
 				local seeking = mp.get_property_bool('seeking')
 				if mp.get_property('pause') == 'no' and not seeking then
-					local tlast_skip_position = position
-					position = delayskip(position, cfg.skipdelay)
-					local tSkip = skipval(0)
-					if tSkip >= cfg.minSkip then
-						last_skip_position = tlast_skip_position
+					local tSkip, can_skip = skipval(0)
+					if can_skip then
+						position = delayskip(position, cfg.skipdelay)
+						last_skip_position = position
 						skip(tSkip)
 						msg.debug('check_position[3]')
 						msg.debug('  position:', formatTime(position))
@@ -417,13 +477,8 @@ function speed_transition(_, subend)
 	if state == 3 or (state == 2 and not cfg.exact_skip) then
 		msg.debug('  state >= 2: check seek back / reset')
 		local position = mp.get_property_number('time-pos')
-		if cfg.skipmode and last_skip_position then
-			msg.debug('  position:', formatTime(position))
-			msg.debug('  ->seek back to:', formatTime(last_skip_position))
-			wait_finish_seeking()
-			mp.set_property_number('time-pos', last_skip_position)
-			reset_state()
-			return
+		if cfg.skipmode then
+			skip_back_if_needed(position, subend)
 		end
 		restore_normalspeed()
 		reset_state()
@@ -507,6 +562,7 @@ function reset_on_file_load()
 		restore_normalspeed()
 	end
 	reset_state()
+	last_speedup_zone_begin = 0
 end
 
 function change_speedup(v)
@@ -534,8 +590,8 @@ mp.add_key_binding('ctrl+j', 'toggle_speedtrans', toggle)
 mp.add_key_binding('alt+j', 'switch_mode', switch_mode)
 mp.add_key_binding('alt++', 'increase_speedup', function() change_speedup(0.1) end, { repeatable = true })
 mp.add_key_binding('alt+-', 'decrease_speedup', function() change_speedup(-0.1) end, { repeatable = true })
-mp.add_key_binding('alt+0', 'increase_leadin', function() change_leadin(0.25) end)
-mp.add_key_binding('alt+9', 'decrease_leadin', function() change_leadin(-0.25) end)
-mp.add_key_binding('alt+8', 'increase_lookahead', function() change_lookAhead(0.25) end)
-mp.add_key_binding('alt+7', 'decrease_lookahead', function() change_lookAhead(-0.25) end)
+mp.add_key_binding('alt+0', 'increase_leadin', function() change_leadin(0.25) end, { repeatable = true })
+mp.add_key_binding('alt+9', 'decrease_leadin', function() change_leadin(-0.25) end, { repeatable = true })
+mp.add_key_binding('alt+8', 'increase_lookahead', function() change_lookAhead(0.25) end, { repeatable = true })
+mp.add_key_binding('alt+7', 'decrease_lookahead', function() change_lookAhead(-0.25) end, { repeatable = true })
 mp.register_event('file-loaded', reset_on_file_load)
