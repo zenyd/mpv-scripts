@@ -30,6 +30,8 @@ state = 0
 firstskip = true --make the first skip in skip mode not have to wait for skipdelay
 aid = nil
 
+ignore = false
+
 --defines how far away we need to be at least from the end of the subtitle to not consider skipping back
 --since we don't always know for how long the subtitle is displayed this is just an arbitrary number
 SKIP_BACK_WINDOW = 1 --only applies for tSkip <= 3
@@ -73,12 +75,18 @@ function sleep(s)
 	repeat until os.clock() > ntime
 end
 
-function reset_state()
+function reset_state(reset_ignore)
+	if reset_ignore == nil then
+		reset_ignore = true
+	end
 	nextsub, shouldspeedup, speedup_zone_begin, speedup_zone_end = nil, false, nil, nil
 	last_speedup_zone_begin = nil
 	last_skip_position = nil
 	last_nextsub_check = nil
 	firstskip = true
+	if reset_ignore then
+		ignore = false
+	end
 	state = 0
 end
 
@@ -238,23 +246,41 @@ function check_should_speedup(subend)
 		nextsubstart = nextsubstart * subspeed + subdelay
 	end
 
+	local t_ignore = false
 	if cfg.ignorePattern and nextsubstart and subend < nextsubstart then
+		local last_step_substart
 		repeat
-			local ignore = shouldIgnore(mp.get_property('sub-text'))
+			local sub_text = mp.get_property('sub-text')
+			local ignore = shouldIgnore(sub_text)
 			if ignore then
-				local t_nextsubstart = mp.get_property_number('sub-end')
-				if t_nextsubstart then
-					t_nextsubstart = t_nextsubstart * subspeed + subdelay
+				t_ignore = ignore
+				local ok, err = mp.commandv('sub-step', 1)
+				sleep(0)
+				if not ok then
+					msg.error('err: ', err)
+					break
 				end
-				if t_nextsubstart and t_nextsubstart > nextsubstart then
-					nextsubstart = t_nextsubstart
-					mp.commandv('sub-step', 1)
-					sleep(0)
+				local sub_start = mp.get_property_number('sub-start')
+				if not sub_start then
+					break
+				end
+
+				if not last_step_substart or sub_start > last_step_substart then
+					last_step_substart = sub_start
 				else
+					--break or we loop indefinitely
 					break
 				end
 			end
 		until not ignore
+		if t_ignore then
+			if not last_step_substart then
+				msg.warn(' next sub-start not found')
+				t_ignore = false
+			else
+				nextsubstart = last_step_substart * subspeed + subdelay
+			end
+		end
 	end
 
 	mp.set_property_number('sub-delay', subdelay)
@@ -304,7 +330,7 @@ function check_should_speedup(subend)
 		msg.debug('  nextsub:', nextsub or '')
 	end
 
-	return nextsub, shouldspeedup, speedup_begin
+	return nextsub, shouldspeedup, speedup_begin, t_ignore
 end
 
 function check_position(_, position)
@@ -409,8 +435,9 @@ function check_position(_, position)
 				end
 			end
 		elseif state == 3 then
-			if position - last_nextsub_check > 0.5 then
-				local t_nextsub, t_shouldspeedup, t_speedup_zone_begin = check_should_speedup(position)
+			if position - last_nextsub_check >= 0.5 then
+				local t_nextsub, t_shouldspeedup, t_speedup_zone_begin, ignore = check_should_speedup(position)
+
 				if t_nextsub then
 					msg.debug('check_position[3]')
 					msg.debug('  position:', formatTime(position))
@@ -468,6 +495,18 @@ function speed_transition(_, subend)
 
 	msg.debug('speed_transition()')
 
+	--if we ignore patterns we need to make sure we are within the ignore window
+	--when we are outside this window we need to re-check speedup conditions
+	if cfg.ignorePattern and ignore then
+		local pos = mp.get_property_number('time-pos')
+		if pos and speedup_zone_begin and speedup_zone_end then
+			if speedup_zone_begin <= pos and pos <= speedup_zone_end then
+				msg.debug('  subtitle pattern match -> ignoring subtitle!')
+				return
+			end
+		end
+	end
+
 	if state == 3 or (state == 2 and not cfg.exact_skip) then
 		msg.debug('  state >= 2: check seek back / reset')
 		local position = mp.get_property_number('time-pos')
@@ -478,12 +517,13 @@ function speed_transition(_, subend)
 		reset_state()
 	end
 
-	local t_nextsub, t_shouldspeedup, t_speedup_zone_begin = check_should_speedup(subend)
+	local t_nextsub, t_shouldspeedup, t_speedup_zone_begin, t_ignore = check_should_speedup(subend)
+	ignore = t_ignore
 	if t_shouldspeedup then
 		if state ~= 0 then
 			msg.debug('  ->reset: state > 0')
 			restore_normalspeed()
-			reset_state()
+			reset_state(false)
 		end
 		nextsub, shouldspeedup, speedup_zone_begin = t_nextsub, t_shouldspeedup, t_speedup_zone_begin
 		speedup_zone_end = speedup_zone_begin + nextsub - cfg.leadin
