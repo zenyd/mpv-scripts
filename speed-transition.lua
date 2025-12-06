@@ -38,13 +38,30 @@ SKIP_BACK_WINDOW = 1 --only applies for tSkip <= 3
 
 function shouldIgnore(subtext)
 	if cfg.ignorePattern and subtext and subtext ~= '' then
-		local st = subtext:match('^%s*(.-)%s*$') -- trim whitespace
+		-- Normalize
+		local st = subtext:match('^%s*(.-)%s*$') or subtext  -- trim whitespace
+		st = st:gsub('\\N', ' '):gsub('[\r\n]+', ' ')        -- remove newlines
+		st = st:gsub('{[^}]-}', '')                          -- ASS override blocks
+		st = st:gsub('\\%a+%d*', '')                         -- inline ASS tags
+		st = st:gsub('%b<>', '')                             -- HTML tags
+		st = st:gsub('%-', '')						         -- remove all dashes
+		
 		if st:find(cfg.subPattern) then
 			return true
+		end
+
+		local symbols = { "♩", "♪", "♬", "♫", "🎵", "🎶" }
+		for _, sym in ipairs(symbols) do
+			local i = st:find(sym, 1, true)
+			if i then
+				return true
+			end
 		end
 	else
 		return false
 	end
+
+	return false
 end
 
 function clamp(v, l, u)
